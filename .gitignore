@@ -1,0 +1,11 @@
+# node_modules/ — this folder is created by "npm install" and can be huge.
+# It doesn't need to be uploaded because anyone can recreate it with "npm install".
+node_modules/
+
+# .env — this file contains secret settings like your port number or API keys.
+# Never upload this to GitHub — keep it private on your computer.
+.env
+
+# reviews.db — this is your SQLite database file containing guest feedback.
+# It's generated locally and should not be committed to source control.
+reviews.db

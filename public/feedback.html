@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- This tag makes the page look correct on mobile phones -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share Your Feedback</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="hotel-name">We're sorry to hear that.</h1>
+    <p class="question">Your feedback helps us improve.<br>What could we have done better?</p>
+
+    <!-- The guest types their private feedback here -->
+    <textarea
+      id="feedback-text"
+      placeholder="Tell us what happened..."
+      maxlength="2000"
+    ></textarea>
+
+    <!-- Error message shown if they try to submit without typing anything -->
+    <p class="error-message" id="error-msg"></p>
+
+    <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">
+      Submit Feedback
+    </button>
+  </div>
+
+  <script>
+    // ── Step 1: Get the review ID from the URL ────────────────────────────────
+    // When a guest is sent here from index.html, the URL looks like:
+    //   feedback.html?id=42
+    // We read that "42" here so we can attach their feedback to the right review.
+    var urlParams = new URLSearchParams(window.location.search);
+    var reviewId = parseInt(urlParams.get('id'));
+
+    // If there's no valid ID in the URL, something went wrong — show a message
+    if (!reviewId || isNaN(reviewId)) {
+      document.getElementById('error-msg').textContent =
+        'Something went wrong. Please go back and try again.';
+      document.getElementById('submit-btn').disabled = true;
+    }
+
+    // ── Step 2: Submit the feedback to the server ─────────────────────────────
+    function submitFeedback() {
+      var feedbackText = document.getElementById('feedback-text').value;
+      var errorEl = document.getElementById('error-msg');
+      var btn = document.getElementById('submit-btn');
+
+      // Clear any previous error message
+      errorEl.textContent = '';
+
+      // Make sure the guest actually typed something
+      if (!feedbackText || feedbackText.trim().length === 0) {
+        errorEl.textContent = 'Please write something before submitting.';
+        return;
+      }
+
+      // Disable the button so they can't submit twice
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      // Send the feedback and review ID to our server
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewId: reviewId,
+          feedback: feedbackText.trim()
+        })
+      })
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.success) {
+          // Feedback saved — send them to the thank-you page
+          window.location.href = 'thankyou.html';
+        } else {
+          // Server returned an error
+          errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+          btn.disabled = false;
+          btn.textContent = 'Submit Feedback';
+        }
+      })
+      .catch(function() {
+        // Network or unexpected error
+        errorEl.textContent = 'Could not connect. Please check your connection and try again.';
+        btn.disabled = false;
+        btn.textContent = 'Submit Feedback';
+      });
+    }
+  </script>
+</body>
+</html>

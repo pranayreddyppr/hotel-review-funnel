@@ -1,0 +1,199 @@
+/* ─────────────────────────────────────────────
+   BASE / RESET
+   Remove default browser spacing and set box-sizing
+───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─────────────────────────────────────────────
+   PAGE BODY
+   Light off-white background, system fonts (no download needed),
+   centered layout for all screen sizes
+───────────────────────────────────────────── */
+body {
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  color: #222;
+}
+
+/* ─────────────────────────────────────────────
+   MAIN CONTAINER
+   Keeps content from getting too wide on desktop,
+   centered with a white card look
+───────────────────────────────────────────── */
+.container {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  max-width: 480px;
+  width: 100%;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────
+   HOTEL NAME HEADING
+───────────────────────────────────────────── */
+.hotel-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   QUESTION SUBHEADING
+───────────────────────────────────────────── */
+.question {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 32px;
+}
+
+/* ─────────────────────────────────────────────
+   STAR RATING ROW
+   Stars sit in a centered row with enough spacing to tap easily
+───────────────────────────────────────────── */
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+/* Each star is a button — large enough for fingers on mobile (min 48px) */
+.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 3rem;        /* big star */
+  line-height: 1;
+  min-width: 48px;
+  min-height: 48px;
+  color: #ccc;            /* gray when not selected */
+  transition: color 0.15s ease, transform 0.1s ease;
+  padding: 4px;
+}
+
+/* When a star is hovered or selected, turn it gold */
+.star:hover,
+.star.selected {
+  color: #f5a623;
+}
+
+/* Slight scale-up on hover for a satisfying feel */
+.star:hover {
+  transform: scale(1.15);
+}
+
+/* Press effect */
+.star:active {
+  transform: scale(0.95);
+}
+
+/* ─────────────────────────────────────────────
+   STATUS / LOADING MESSAGE
+   Shown while the form is submitting
+───────────────────────────────────────────── */
+.status-message {
+  font-size: 1rem;
+  color: #888;
+  margin-top: 16px;
+  min-height: 24px;
+}
+
+/* ─────────────────────────────────────────────
+   FEEDBACK TEXTAREA
+   Full-width, comfortable for typing on mobile
+───────────────────────────────────────────── */
+textarea {
+  width: 100%;
+  min-height: 140px;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+textarea:focus {
+  border-color: #f5a623;
+}
+
+/* ─────────────────────────────────────────────
+   SUBMIT BUTTON
+   Full width, bold, easy to tap on mobile
+───────────────────────────────────────────── */
+.btn-submit {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: inherit;
+  background-color: #f5a623;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-submit:hover {
+  background-color: #e09415;
+}
+
+.btn-submit:active {
+  transform: scale(0.98);
+}
+
+.btn-submit:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────
+   ERROR MESSAGE
+   Shown in red if something goes wrong
+───────────────────────────────────────────── */
+.error-message {
+  color: #d0021b;
+  font-size: 0.95rem;
+  margin-top: 12px;
+  min-height: 20px;
+}
+
+/* ─────────────────────────────────────────────
+   THANK YOU PAGE
+   Big checkmark and centered message
+───────────────────────────────────────────── */
+.thankyou-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.thankyou-heading {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.thankyou-sub {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+}
