@@ -2,124 +2,142 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- This tag makes the page look correct on mobile phones -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rate Your Stay</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <!-- Hotel name is loaded from the server when the page opens -->
+    <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
     <h1 class="hotel-name" id="hotel-name">Loading...</h1>
+    <p class="cold-start-msg" id="cold-start-msg"></p>
 
     <p class="question">How was your stay?</p>
 
-    <!-- 5 star buttons. Each has a data-value so we know which star was clicked -->
     <div class="stars" id="stars">
-      <button class="star" data-value="1" aria-label="1 star">★</button>
-      <button class="star" data-value="2" aria-label="2 stars">★</button>
-      <button class="star" data-value="3" aria-label="3 stars">★</button>
-      <button class="star" data-value="4" aria-label="4 stars">★</button>
-      <button class="star" data-value="5" aria-label="5 stars">★</button>
+      <button class="star" data-value="1" aria-label="1 star">&#9733;</button>
+      <button class="star" data-value="2" aria-label="2 stars">&#9733;</button>
+      <button class="star" data-value="3" aria-label="3 stars">&#9733;</button>
+      <button class="star" data-value="4" aria-label="4 stars">&#9733;</button>
+      <button class="star" data-value="5" aria-label="5 stars">&#9733;</button>
     </div>
 
-    <!-- This message shows "Submitting..." while we wait for the server -->
+    <p id="star-label" class="star-label">&nbsp;</p>
+
     <p class="status-message" id="status"></p>
   </div>
 
   <script>
-    // ── Step 1: Load the hotel name when the page opens ──────────────────────
-    // We ask our server for the hotel name and display it at the top of the page.
-    fetch('/api/config')
-      .then(function(response) { return response.json(); })
-      .then(function(data) {
-        document.getElementById('hotel-name').textContent = data.hotelName;
-      })
-      .catch(function() {
-        // If something goes wrong, just show a fallback name
-        document.getElementById('hotel-name').textContent = 'Rate Your Stay';
-      });
+    var hotelSlug = new URLSearchParams(window.location.search).get('hotel');
+    var hotelNameEl = document.getElementById('hotel-name');
+    var coldStartEl = document.getElementById('cold-start-msg');
 
-    // ── Step 2: Handle star clicks ────────────────────────────────────────────
-    // Get all the star buttons
+    // If no hotel slug in URL, show error and disable stars
+    if (!hotelSlug) {
+      hotelNameEl.textContent = 'Hotel not found. Please check your link.';
+      hotelNameEl.style.color = '#d0021b';
+      document.querySelectorAll('.star').forEach(function(s) { s.disabled = true; });
+    } else {
+      // Retry fetching hotel name up to 3 times with 5s delay (cold start resilience)
+      var attempts = 0;
+      var coldStartTimer = setTimeout(function() {
+        coldStartEl.textContent = 'Waking up the server, one moment…';
+      }, 5000);
+
+      function fetchConfig() {
+        attempts++;
+        fetch('/api/config?hotel=' + encodeURIComponent(hotelSlug))
+          .then(function(response) {
+            if (!response.ok) throw new Error('not ok');
+            return response.json();
+          })
+          .then(function(data) {
+            clearTimeout(coldStartTimer);
+            coldStartEl.textContent = '';
+            hotelNameEl.classList.remove('loading-pulse');
+            hotelNameEl.textContent = data.hotelName;
+            document.title = data.hotelName + ' — Rate Your Stay';
+            if (data.hotelLogo) {
+              var logoEl = document.getElementById('hotel-logo');
+              logoEl.src = data.hotelLogo;
+              logoEl.alt = data.hotelName + ' logo';
+              logoEl.style.display = 'block';
+            }
+          })
+          .catch(function() {
+            if (attempts < 3) {
+              setTimeout(fetchConfig, 5000);
+            } else {
+              clearTimeout(coldStartTimer);
+              coldStartEl.textContent = '';
+              hotelNameEl.classList.remove('loading-pulse');
+              hotelNameEl.textContent = 'Rate Your Stay';
+            }
+          });
+      }
+      hotelNameEl.classList.add('loading-pulse');
+      fetchConfig();
+    }
+
+    // Star labels
+    var starLabels = { 1: 'Terrible', 2: 'Poor', 3: 'Okay', 4: 'Great', 5: 'Excellent' };
+    var starLabelEl = document.getElementById('star-label');
     var stars = document.querySelectorAll('.star');
-    var selectedRating = 0;  // Tracks which star was clicked
-    var submitted = false;   // Prevents double-submitting
+    var selectedRating = 0;
+    var submitted = false;
 
-    // Loop through each star and add a click listener
     stars.forEach(function(star) {
       star.addEventListener('click', function() {
-        // Don't allow clicking stars again after submitting
         if (submitted) return;
-
-        // Read the star's value (1 through 5)
         selectedRating = parseInt(star.getAttribute('data-value'));
-
-        // Highlight all stars up to and including the clicked one
         highlightStars(selectedRating);
-
-        // Wait 0.5 seconds so the guest can see their selection, then submit
-        setTimeout(function() {
-          submitRating(selectedRating);
-        }, 500);
+        starLabelEl.textContent = starLabels[selectedRating] || ' ';
+        setTimeout(function() { submitRating(selectedRating); }, 500);
       });
 
-      // When hovering over a star, preview the highlight
       star.addEventListener('mouseenter', function() {
         if (submitted) return;
-        var hoverValue = parseInt(star.getAttribute('data-value'));
-        highlightStars(hoverValue);
+        var val = parseInt(star.getAttribute('data-value'));
+        highlightStars(val);
+        starLabelEl.textContent = starLabels[val] || ' ';
       });
 
-      // When the mouse leaves the stars area, go back to the selected state
       star.addEventListener('mouseleave', function() {
         if (submitted) return;
         highlightStars(selectedRating);
+        starLabelEl.textContent = selectedRating ? (starLabels[selectedRating] || ' ') : ' ';
       });
     });
 
-    // ── Step 3: Highlight stars up to a given number ──────────────────────────
-    // For example, if value is 3, stars 1, 2, and 3 turn gold; 4 and 5 go gray.
     function highlightStars(value) {
       stars.forEach(function(s) {
-        var starValue = parseInt(s.getAttribute('data-value'));
-        if (starValue <= value) {
-          s.classList.add('selected');    // gold
-        } else {
-          s.classList.remove('selected'); // gray
-        }
+        var v = parseInt(s.getAttribute('data-value'));
+        if (v <= value) { s.classList.add('selected'); }
+        else { s.classList.remove('selected'); }
       });
     }
 
-    // ── Step 4: Send the rating to the server ─────────────────────────────────
     function submitRating(rating) {
+      if (!hotelSlug) return;
       submitted = true;
-
-      // Show a "Submitting..." message so the guest knows something is happening
-      document.getElementById('status').textContent = 'Submitting...';
-
-      // Send the rating to our server using a POST request
+      document.getElementById('status').textContent = 'Submitting…';
       fetch('/api/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: rating })
+        body: JSON.stringify({ rating: rating, hotelSlug: hotelSlug })
       })
       .then(function(response) { return response.json(); })
       .then(function(data) {
         if (data.action === 'redirect') {
-          // High rating — send them to Google Reviews
           window.location.href = data.url;
-
         } else if (data.action === 'feedback') {
-          // Low rating — send them to the private feedback page
-          // We pass the reviewId in the URL so feedback.html knows which review to update
-          window.location.href = 'feedback.html?id=' + data.reviewId;
+          window.location.href = 'feedback.html?token=' + encodeURIComponent(data.reviewToken) + '&hotel=' + encodeURIComponent(hotelSlug);
         }
       })
       .catch(function() {
-        // If there's a network error, let the guest know
         document.getElementById('status').textContent = 'Something went wrong. Please try again.';
         submitted = false;
+        highlightStars(0);
       });
     }
   </script>

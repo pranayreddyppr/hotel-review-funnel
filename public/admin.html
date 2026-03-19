@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Hotel Reviews</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { align-items: flex-start; padding: 24px 16px; }
+    .admin-wrap { max-width: 960px; width: 100%; margin: 0 auto; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .admin-header h1 { font-size: 1.4rem; font-weight: 700; color: #111; }
+    .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .controls select {
+      padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 1rem; font-family: inherit; background: #fff; cursor: pointer; outline: none;
+    }
+    .controls select:focus { border-color: #f5a623; }
+    .stats-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card {
+      background: #fff; border-radius: 12px; padding: 16px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 130px; text-align: center;
+    }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: #111; }
+    .stat-label { font-size: 0.8rem; color: #888; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    th { background: #f5f5f5; padding: 12px 16px; text-align: left; font-size: 0.82rem; color: #555; font-weight: 600; border-bottom: 1px solid #eee; }
+    td { padding: 12px 16px; font-size: 0.92rem; color: #333; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr.row-red td { background-color: #fff5f5; }
+    tr.row-yellow td { background-color: #fffbf0; }
+    tr.row-green td { background-color: #f5fff8; }
+    .feedback-cell { max-width: 400px; line-height: 1.5; word-break: break-word; }
+    .no-feedback { color: #bbb; font-style: italic; }
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+    .pagination button {
+      padding: 8px 14px; border: 1.5px solid #ddd; background: #fff;
+      border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit;
+    }
+    .pagination button:hover { background: #f5a623; color: #fff; border-color: #f5a623; }
+    .pagination button.active { background: #f5a623; color: #fff; border-color: #f5a623; cursor: default; }
+    .msg { text-align: center; color: #888; padding: 40px; font-size: 1rem; }
+    .msg.error { color: #d0021b; }
+    .logout-btn {
+      padding: 8px 16px; border: 1.5px solid #ddd; background: #fff;
+      border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-family: inherit;
+    }
+    .logout-btn:hover { background: #d0021b; color: #fff; border-color: #d0021b; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <h1>Hotel Reviews Dashboard</h1>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="controls">
+      <select id="hotel-select" onchange="loadReviews(1)">
+        <option value="">All Hotels</option>
+      </select>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">&#8212;</div>
+        <div class="stat-label">Total Reviews</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-avg">&#8212;</div>
+        <div class="stat-label">Avg Rating (page)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-feedback">&#8212;</div>
+        <div class="stat-label">With Feedback (page)</div>
+      </div>
+    </div>
+
+    <div id="table-container">
+      <div class="msg">Loading&hellip;</div>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <script>
+    var currentPage = 1;
+    var PAGE_LIMIT = 50;
+    var credentials = null;
+
+    // ── Credentials ───────────────────────────────────────────────────────────
+    function getCredentials() {
+      var stored = sessionStorage.getItem('adminCreds');
+      if (stored) return stored;
+      var user = window.prompt('Admin username:');
+      if (!user && user !== '') return null;
+      var pass = window.prompt('Admin password:');
+      if (pass === null) return null;
+      var encoded = btoa(user + ':' + pass);
+      sessionStorage.setItem('adminCreds', encoded);
+      return encoded;
+    }
+
+    function authHeaders() {
+      return { 'Authorization': 'Basic ' + credentials };
+    }
+
+    function logout() {
+      sessionStorage.removeItem('adminCreds');
+      window.location.reload();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function starsDisplay(rating) {
+      var s = '';
+      for (var i = 1; i <= 5; i++) { s += i <= rating ? '\u2605' : '\u2606'; }
+      return s;
+    }
+
+    function rowClass(rating) {
+      if (rating <= 2) return 'row-red';
+      if (rating === 3) return 'row-yellow';
+      return 'row-green';
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // ── Load hotel list ───────────────────────────────────────────────────────
+    function loadHotels() {
+      fetch('/api/admin/config', { headers: authHeaders() })
+        .then(function(r) {
+          if (r.status === 401) { sessionStorage.removeItem('adminCreds'); window.location.reload(); return; }
+          return r.json();
+        })
+        .then(function(data) {
+          if (!data) return;
+          var select = document.getElementById('hotel-select');
+          data.hotels.forEach(function(h) {
+            var opt = document.createElement('option');
+            opt.value = h.slug;
+            opt.textContent = h.name;
+            select.appendChild(opt);
+          });
+        })
+        .catch(function() {
+          document.getElementById('table-container').innerHTML = '<div class="msg error">Failed to load hotel list.</div>';
+        });
+    }
+
+    // ── Load reviews ──────────────────────────────────────────────────────────
+    function loadReviews(page) {
+      currentPage = page;
+      var hotelSlug = document.getElementById('hotel-select').value;
+      var url = '/api/admin/reviews?page=' + page;
+      if (hotelSlug) url += '&hotel=' + encodeURIComponent(hotelSlug);
+
+      document.getElementById('table-container').innerHTML = '<div class="msg">Loading&hellip;</div>';
+
+      fetch(url, { headers: authHeaders() })
+        .then(function(r) {
+          if (r.status === 401) { sessionStorage.removeItem('adminCreds'); window.location.reload(); return; }
+          return r.json();
+        })
+        .then(function(data) {
+          if (!data) return;
+          renderStats(data.reviews, data.total);
+          renderTable(data.reviews);
+          renderPagination(data.total);
+        })
+        .catch(function() {
+          document.getElementById('table-container').innerHTML = '<div class="msg error">Failed to load reviews.</div>';
+        });
+    }
+
+    // ── Render stats ──────────────────────────────────────────────────────────
+    function renderStats(reviews, total) {
+      document.getElementById('stat-total').textContent = total;
+      if (reviews.length > 0) {
+        var avg = reviews.reduce(function(sum, r) { return sum + r.rating; }, 0) / reviews.length;
+        document.getElementById('stat-avg').textContent = avg.toFixed(1) + ' \u2605';
+        var withFb = reviews.filter(function(r) { return r.feedback; }).length;
+        document.getElementById('stat-feedback').textContent = withFb + ' / ' + reviews.length;
+      } else {
+        document.getElementById('stat-avg').textContent = '\u2014';
+        document.getElementById('stat-feedback').textContent = '\u2014';
+      }
+    }
+
+    // ── Render table ──────────────────────────────────────────────────────────
+    function renderTable(reviews) {
+      if (!reviews || reviews.length === 0) {
+        document.getElementById('table-container').innerHTML = '<div class="msg">No reviews found.</div>';
+        return;
+      }
+      var html = '<table><thead><tr><th>Date</th><th>Hotel</th><th>Rating</th><th>Feedback</th></tr></thead><tbody>';
+      reviews.forEach(function(r) {
+        html += '<tr class="' + rowClass(r.rating) + '">';
+        html += '<td>' + formatDate(r.created_at) + '</td>';
+        html += '<td>' + escapeHtml(r.hotel_slug || '—') + '</td>';
+        html += '<td>' + starsDisplay(r.rating) + ' (' + r.rating + ')</td>';
+        html += '<td class="feedback-cell">' + (r.feedback ? escapeHtml(r.feedback) : '<span class="no-feedback">No feedback</span>') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('table-container').innerHTML = html;
+    }
+
+    // ── Render pagination ─────────────────────────────────────────────────────
+    function renderPagination(total) {
+      var totalPages = Math.ceil(total / PAGE_LIMIT);
+      var pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      if (totalPages <= 1) return;
+      for (var i = 1; i <= totalPages; i++) {
+        var btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        (function(page) {
+          btn.onclick = function() { loadReviews(page); };
+        })(i);
+        pagination.appendChild(btn);
+      }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    credentials = getCredentials();
+    if (!credentials) {
+      document.querySelector('.admin-wrap').innerHTML =
+        '<div class="msg error">No credentials provided. <a href="/admin">Try again</a></div>';
+    } else {
+      loadHotels();
+      loadReviews(1);
+    }
+  </script>
+</body>
+</html>

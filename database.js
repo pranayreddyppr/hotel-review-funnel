@@ -1,51 +1,58 @@
-// Import the better-sqlite3 package so we can use a database
-const Database = require('better-sqlite3');
+const { createClient } = require("@supabase/supabase-js");
+const crypto = require("crypto");
 
-// Open (or create) the database file called reviews.db
-// This file will be created automatically in your project folder if it doesn't exist yet
-const db = new Database('reviews.db');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
 
-// Create the "reviews" table if it doesn't already exist.
-// This runs once when the server starts — it's safe to run every time.
-// Each column stores a different piece of information:
-//   id         — a unique number assigned automatically to each row
-//   rating     — the star rating the guest chose (1 to 5)
-//   feedback   — the private text feedback (only filled in for low ratings)
-//   created_at — the date and time the review was submitted
-db.exec(`
-  CREATE TABLE IF NOT EXISTS reviews (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    rating     INTEGER NOT NULL,
-    feedback   TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  )
-`);
-
-// saveRating(rating)
-// Call this function when a guest submits a star rating.
-// It saves a new row in the database with just the rating.
-// Returns the id of the newly inserted row — we use this later to attach feedback.
-function saveRating(rating) {
-  // Prepare the SQL insert statement
-  const stmt = db.prepare('INSERT INTO reviews (rating) VALUES (?)');
-
-  // Run it with the rating value and get back info about what was inserted
-  const result = stmt.run(rating);
-
-  // Return the auto-generated id of the new row
-  return result.lastInsertRowid;
+// saveRating(hotelSlug, rating)
+// Inserts a new review row with a random UUID token.
+// Returns the token — used by the guest to submit feedback without exposing a guessable ID.
+async function saveRating(hotelSlug, rating) {
+  const token = crypto.randomUUID();
+  const { data, error } = await supabase
+    .from("reviews")
+    .insert({ hotel_slug: hotelSlug, rating, token })
+    .select("token")
+    .single();
+  if (error) throw error;
+  return data.token;
 }
 
-// saveFeedback(id, feedback)
-// Call this function when a guest submits private text feedback.
-// It finds the row with the matching id and fills in the feedback column.
-function saveFeedback(id, feedback) {
-  // Prepare the SQL update statement
-  const stmt = db.prepare('UPDATE reviews SET feedback = ? WHERE id = ?');
-
-  // Run it with the feedback text and the row id
-  stmt.run(feedback, id);
+// saveFeedback(token, feedback)
+// Attaches feedback to the review identified by the unguessable token.
+// .is('feedback', null) prevents overwriting feedback that was already submitted.
+// Returns true if saved, false if token not found or feedback already exists.
+async function saveFeedback(token, feedback) {
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({ feedback })
+    .eq("token", token)
+    .is("feedback", null)
+    .select("id");
+  if (error) throw error;
+  return data && data.length > 0;
 }
 
-// Export the two functions so server.js can use them
-module.exports = { saveRating, saveFeedback };
+// getReviews(hotelSlug, page, limit)
+// Returns paginated reviews ordered by newest first.
+// hotelSlug is optional — if null, returns reviews for all hotels.
+async function getReviews(hotelSlug, page = 1, limit = 50) {
+  const offset = (page - 1) * limit;
+  let query = supabase
+    .from("reviews")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (hotelSlug) {
+    query = query.eq("hotel_slug", hotelSlug);
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { reviews: data, total: count };
+}
+
+module.exports = { saveRating, saveFeedback, getReviews };

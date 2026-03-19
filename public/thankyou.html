@@ -2,15 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- This tag makes the page look correct on mobile phones -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thank You</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <!-- Big checkmark icon -->
-    <div class="thankyou-icon">✅</div>
+    <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
 
     <h1 class="thankyou-heading">Thank you for your feedback!</h1>
 
@@ -19,5 +17,22 @@
       Your comments have been received and will be reviewed by our team.
     </p>
   </div>
+
+  <script>
+    var hotelSlug = new URLSearchParams(window.location.search).get('hotel');
+    if (hotelSlug) {
+      fetch('/api/config?hotel=' + encodeURIComponent(hotelSlug))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.hotelLogo) {
+            var logoEl = document.getElementById('hotel-logo');
+            logoEl.src = data.hotelLogo;
+            logoEl.alt = (data.hotelName || '') + ' logo';
+            logoEl.style.display = 'block';
+          }
+        })
+        .catch(function() {});
+    }
+  </script>
 </body>
 </html>
