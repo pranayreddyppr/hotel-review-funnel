@@ -129,9 +129,7 @@
       .then(function(response) { return response.json(); })
       .then(function(data) {
         if (data.action === 'redirect') {
-          window.location.href = 'google-bridge.html?hotel=' + encodeURIComponent(hotelSlug) +
-            '&rating=' + rating +
-            '&url=' + encodeURIComponent(data.url);
+          window.location.href = data.url;
         } else if (data.action === 'feedback') {
           window.location.href = 'feedback.html?token=' + encodeURIComponent(data.reviewToken) + '&hotel=' + encodeURIComponent(hotelSlug);
         }
