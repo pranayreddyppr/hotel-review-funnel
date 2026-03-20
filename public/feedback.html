@@ -4,18 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Share Your Feedback</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
-    <h1 class="hotel-name">We'd love to do better.</h1>
-    <p class="question">Your experience matters to us. Please share what happened — we read every response and use your feedback to make real changes.</p>
+    <h1 class="feedback-heading">We’d love to do better.</h1>
+    <div class="divider"></div>
+    <p class="feedback-sub">Your experience matters to us. Please share what happened — we read every response and use your feedback to make real changes.</p>
 
     <textarea
       id="feedback-text"
-      placeholder="Tell us what happened..."
+      placeholder="Tell us what happened…"
       maxlength="500"
+      style="margin-top:24px;"
     ></textarea>
 
     <p class="char-counter" id="char-counter">0 / 500</p>
@@ -64,11 +68,11 @@
       var len = textarea.value.length;
       counter.textContent = len + ' / 500';
       if (len >= 500) {
-        counter.style.color = '#d0021b';
+        counter.style.color = '#ff6b6b';
       } else if (len > 400) {
-        counter.style.color = '#f5a623';
+        counter.style.color = '#D4AF37';
       } else {
-        counter.style.color = '#888';
+        counter.style.color = 'rgba(255,255,255,0.25)';
       }
     });
 

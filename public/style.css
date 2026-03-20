@@ -1,6 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap");
+
 /* ─────────────────────────────────────────────
    BASE / RESET
-   Remove default browser spacing and set box-sizing
 ───────────────────────────────────────────── */
 *,
 *::before,
@@ -12,220 +13,381 @@
 
 /* ─────────────────────────────────────────────
    PAGE BODY
-   Light off-white background, system fonts (no download needed),
-   centered layout for all screen sizes
 ───────────────────────────────────────────── */
 body {
-  background-color: #f5f5f5;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  color: #222;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: linear-gradient(145deg, #0a0a18 0%, #12122e 45%, #0a1520 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow orbs */
+body::before {
+  content: "";
+  position: fixed;
+  top: -25%;
+  left: -15%;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(
+    circle,
+    rgba(212, 175, 55, 0.07) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -25%;
+  right: -15%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(
+    circle,
+    rgba(80, 100, 200, 0.09) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .hotel-logo {
   display: block;
-  max-width: 200px;
-  max-height: 90px;
+  max-width: 180px;
+  max-height: 72px;
   width: auto;
   height: auto;
-  margin: 0 auto 16px auto;
+  margin: 0 auto 28px auto;
   object-fit: contain;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* ─────────────────────────────────────────────
-   MAIN CONTAINER
-   Keeps content from getting too wide on desktop,
-   centered with a white card look
+   MAIN CONTAINER — glassmorphism card
 ───────────────────────────────────────────── */
 .container {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 28px;
+  box-shadow:
+    0 40px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(212, 175, 55, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   max-width: 480px;
   width: 100%;
-  padding: 40px 32px;
+  padding: 52px 44px;
   text-align: center;
+  position: relative;
+  z-index: 1;
+  animation: cardFadeIn 0.5s ease;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gold accent line at top of card */
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+  border-radius: 0 0 4px 4px;
 }
 
 /* ─────────────────────────────────────────────
    HOTEL NAME HEADING
 ───────────────────────────────────────────── */
 .hotel-name {
-  font-size: 1.5rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.55rem;
   font-weight: 700;
-  color: #111;
-  margin-bottom: 8px;
+  color: #ffffff;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
 }
 
 /* ─────────────────────────────────────────────
    QUESTION SUBHEADING
 ───────────────────────────────────────────── */
 .question {
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 32px;
+  font-size: 0.97rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 0;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+
+/* Gold divider */
+.divider {
+  width: 36px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 175, 55, 0.6),
+    transparent
+  );
+  margin: 20px auto 28px;
 }
 
 /* ─────────────────────────────────────────────
    STAR RATING ROW
-   Stars sit in a centered row with enough spacing to tap easily
 ───────────────────────────────────────────── */
 .stars {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 2px;
+  margin-bottom: 18px;
 }
 
-/* Each star is a button — large enough for fingers on mobile (min 48px) */
 .star {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 3rem; /* big star */
+  font-size: 3.2rem;
   line-height: 1;
-  min-width: 48px;
-  min-height: 48px;
-  color: #ccc; /* gray when not selected */
+  min-width: 52px;
+  min-height: 52px;
+  color: rgba(255, 255, 255, 0.14);
   transition:
-    color 0.15s ease,
-    transform 0.1s ease;
+    color 0.18s ease,
+    transform 0.15s ease,
+    filter 0.18s ease;
   padding: 4px;
 }
 
-/* When a star is hovered or selected, turn it gold */
 .star:hover,
 .star.selected {
-  color: #f5a623;
+  color: #d4af37;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.55));
 }
 
-/* Slight scale-up on hover for a satisfying feel */
 .star:hover {
-  transform: scale(1.15);
+  transform: scale(1.22) translateY(-4px);
 }
 
-/* Press effect */
 .star:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
+}
+
+.star.selected {
+  animation: starPop 0.22s ease;
+}
+
+@keyframes starPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35) translateY(-5px);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ─────────────────────────────────────────────
    STATUS / LOADING MESSAGE
-   Shown while the form is submitting
 ───────────────────────────────────────────── */
 .status-message {
-  font-size: 1rem;
-  color: #888;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.35);
   margin-top: 16px;
   min-height: 24px;
+  letter-spacing: 0.04em;
 }
 
 /* ─────────────────────────────────────────────
    FEEDBACK TEXTAREA
-   Full-width, comfortable for typing on mobile
 ───────────────────────────────────────────── */
 textarea {
   width: 100%;
-  min-height: 140px;
-  font-size: 1rem;
-  font-family: inherit;
-  padding: 14px;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
+  min-height: 148px;
+  font-size: 0.96rem;
+  font-family: "Inter", inherit;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 14px;
   resize: vertical;
   outline: none;
-  transition: border-color 0.2s;
-  margin-bottom: 20px;
-  color: #222;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.65;
+}
+
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.22);
 }
 
 textarea:focus {
-  border-color: #f5a623;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.07);
 }
 
 /* ─────────────────────────────────────────────
    SUBMIT BUTTON
-   Full width, bold, easy to tap on mobile
 ───────────────────────────────────────────── */
 .btn-submit {
   display: block;
   width: 100%;
   padding: 16px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  font-family: inherit;
-  background-color: #f5a623;
-  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: "Inter", inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #c8a444 0%, #e0c060 50%, #c8a444 100%);
+  background-size: 200% 200%;
+  color: #1a1100;
   border: none;
-  border-radius: 10px;
+  border-radius: 13px;
   cursor: pointer;
   transition:
-    background-color 0.2s,
-    transform 0.1s;
+    opacity 0.2s,
+    transform 0.12s,
+    box-shadow 0.2s;
+  box-shadow: 0 4px 22px rgba(212, 175, 55, 0.28);
 }
 
 .btn-submit:hover {
-  background-color: #e09415;
+  opacity: 0.88;
+  box-shadow: 0 6px 32px rgba(212, 175, 55, 0.42);
+  transform: translateY(-1px);
 }
 
 .btn-submit:active {
-  transform: scale(0.98);
+  transform: scale(0.98) translateY(0);
 }
 
 .btn-submit:disabled {
-  background-color: #ccc;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.28);
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 /* ─────────────────────────────────────────────
    ERROR MESSAGE
-   Shown in red if something goes wrong
 ───────────────────────────────────────────── */
 .error-message {
-  color: #d0021b;
-  font-size: 0.95rem;
-  margin-top: 12px;
+  color: #ff6b6b;
+  font-size: 0.88rem;
+  margin-top: 10px;
   min-height: 20px;
 }
 
 /* ─────────────────────────────────────────────
+   FEEDBACK PAGE HEADINGS
+───────────────────────────────────────────── */
+.feedback-heading {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.feedback-sub {
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 300;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+/* ─────────────────────────────────────────────
    THANK YOU PAGE
-   Big checkmark and centered message
 ───────────────────────────────────────────── */
 .thankyou-icon {
-  font-size: 4rem;
-  margin-bottom: 16px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(212, 175, 55, 0.18),
+    rgba(212, 175, 55, 0.05)
+  );
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 28px;
+  font-size: 2.2rem;
+  animation: iconBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes iconBounce {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .thankyou-heading {
-  font-size: 1.6rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.55rem;
   font-weight: 700;
-  color: #111;
+  color: #ffffff;
   margin-bottom: 12px;
 }
 
 .thankyou-sub {
-  font-size: 1rem;
-  color: #666;
-  line-height: 1.6;
+  font-size: 0.93rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 300;
+  line-height: 1.7;
 }
 
 /* ─────────────────────────────────────────────
    HOTEL NAME DISPLAY (feedback + thank you pages)
 ───────────────────────────────────────────── */
 .hotel-name-display {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #888;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
   margin-bottom: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 /* ─────────────────────────────────────────────
@@ -233,22 +395,27 @@ textarea:focus {
 ───────────────────────────────────────────── */
 .star-label {
   text-align: center;
-  font-size: 1rem;
-  color: #888;
-  min-height: 24px;
-  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d4af37;
+  min-height: 22px;
+  margin-top: 4px;
   margin-bottom: 0;
+  transition: opacity 0.2s;
 }
 
 /* ─────────────────────────────────────────────
    CHARACTER COUNTER (feedback page)
 ───────────────────────────────────────────── */
 .char-counter {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.25);
   text-align: right;
-  margin-top: -12px;
-  margin-bottom: 16px;
+  margin-top: 6px;
+  margin-bottom: 20px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─────────────────────────────────────────────
@@ -264,7 +431,7 @@ textarea:focus {
     opacity: 1;
   }
   50% {
-    opacity: 0.4;
+    opacity: 0.35;
   }
 }
 
@@ -272,8 +439,28 @@ textarea:focus {
    COLD START MESSAGE (index page)
 ───────────────────────────────────────────── */
 .cold-start-msg {
-  font-size: 0.85rem;
-  color: #aaa;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.28);
   min-height: 20px;
   margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .container {
+    padding: 40px 28px;
+    border-radius: 22px;
+  }
+  .hotel-name,
+  .feedback-heading,
+  .thankyou-heading {
+    font-size: 1.35rem;
+  }
+  .star {
+    font-size: 2.8rem;
+    min-width: 44px;
+  }
 }
