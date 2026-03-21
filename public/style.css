@@ -464,3 +464,47 @@ textarea:focus {
     min-width: 44px;
   }
 }
+
+/* ─────────────────────────────────────────────
+   THEMED OVERRIDES (applied via CSS custom props)
+───────────────────────────────────────────── */
+body.themed {
+  background: var(--theme-gradient);
+}
+body.themed::before {
+  background: radial-gradient(circle, var(--theme-card-accent) 0%, transparent 65%);
+}
+body.themed .container {
+  border-color: var(--theme-card-border);
+  box-shadow:
+    0 40px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px var(--theme-card-border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+body.themed .container::before {
+  background: linear-gradient(90deg, transparent, var(--theme-accent), transparent);
+}
+body.themed .divider {
+  background: linear-gradient(90deg, transparent, var(--theme-divider), transparent);
+}
+body.themed .star:hover,
+body.themed .star.selected {
+  color: var(--theme-star);
+  filter: drop-shadow(0 0 10px var(--theme-star-glow));
+}
+body.themed .star-label {
+  color: var(--theme-star);
+}
+body.themed .btn-submit {
+  background: var(--theme-btn-gradient);
+  color: var(--theme-btn-text);
+  box-shadow: 0 4px 22px var(--theme-card-accent);
+}
+body.themed textarea:focus {
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 0 3px var(--theme-card-accent);
+}
+body.themed .thankyou-icon {
+  background: linear-gradient(135deg, var(--theme-card-accent), transparent);
+  border-color: var(--theme-accent);
+}

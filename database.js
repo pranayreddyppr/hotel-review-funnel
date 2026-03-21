@@ -35,10 +35,10 @@ async function saveFeedback(token, feedback) {
   return data && data.length > 0;
 }
 
-// getReviews(hotelSlug, page, limit)
+// getReviews(hotelSlug, page, limit, ratingFilter, search)
 // Returns paginated reviews ordered by newest first.
 // hotelSlug is optional — if null, returns reviews for all hotels.
-async function getReviews(hotelSlug, page = 1, limit = 50) {
+async function getReviews(hotelSlug, page = 1, limit = 50, ratingFilter = null, search = null) {
   const offset = (page - 1) * limit;
   let query = supabase
     .from("reviews")
@@ -49,10 +49,40 @@ async function getReviews(hotelSlug, page = 1, limit = 50) {
   if (hotelSlug) {
     query = query.eq("hotel_slug", hotelSlug);
   }
+  if (ratingFilter && Number.isInteger(ratingFilter) && ratingFilter >= 1 && ratingFilter <= 5) {
+    query = query.eq("rating", ratingFilter);
+  }
+  if (search && search.trim().length > 0) {
+    query = query.ilike("feedback", `%${search.trim()}%`);
+  }
 
   const { data, error, count } = await query;
   if (error) throw error;
   return { reviews: data, total: count };
 }
 
-module.exports = { saveRating, saveFeedback, getReviews };
+// deleteReview(id)
+// Deletes a single review by its ID.
+async function deleteReview(id) {
+  const { data, error } = await supabase
+    .from("reviews")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data && data.length > 0;
+}
+
+// clearReviews(hotelSlug)
+// Deletes all reviews for a given hotel.
+async function clearReviews(hotelSlug) {
+  const { data, error } = await supabase
+    .from("reviews")
+    .delete()
+    .eq("hotel_slug", hotelSlug)
+    .select("id");
+  if (error) throw error;
+  return data ? data.length : 0;
+}
+
+module.exports = { saveRating, saveFeedback, getReviews, deleteReview, clearReviews };

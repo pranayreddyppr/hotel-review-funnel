@@ -4,168 +4,482 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Hotel Reviews</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { align-items: flex-start; padding: 24px 16px; }
-    .admin-wrap { max-width: 960px; width: 100%; margin: 0 auto; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .admin-header h1 { font-size: 1.4rem; font-weight: 700; color: #111; }
-    .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .controls select {
-      padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px;
-      font-size: 1rem; font-family: inherit; background: #fff; cursor: pointer; outline: none;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0e1117; color: #c9d1d9; min-height: 100vh;
     }
-    .controls select:focus { border-color: #f5a623; }
-    .stats-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    /* ── Login overlay ── */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: #0e1117; display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 16px;
+      padding: 48px 40px; width: 100%; max-width: 380px; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .login-card h1 { font-size: 1.3rem; font-weight: 700; color: #f0f6fc; margin-bottom: 8px; }
+    .login-card p { font-size: 0.85rem; color: #8b949e; margin-bottom: 28px; }
+    .login-card input {
+      display: block; width: 100%; padding: 12px 16px; margin-bottom: 14px;
+      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+      color: #f0f6fc; font-size: 0.92rem; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus { border-color: #58a6ff; }
+    .login-card input::placeholder { color: #484f58; }
+    .login-btn {
+      display: block; width: 100%; padding: 12px; margin-top: 6px;
+      background: #238636; color: #fff; border: none; border-radius: 8px;
+      font-size: 0.92rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover { background: #2ea043; }
+    .login-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+    .login-error { color: #f85149; font-size: 0.82rem; margin-top: 12px; min-height: 20px; }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: #161b22; border-bottom: 1px solid #21262d;
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar h1 { font-size: 1.05rem; font-weight: 700; color: #f0f6fc; }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-sm {
+      padding: 7px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 500;
+      font-family: inherit; cursor: pointer; border: 1px solid #30363d;
+      background: #21262d; color: #c9d1d9; transition: all 0.15s;
+    }
+    .btn-sm:hover { background: #30363d; border-color: #8b949e; }
+    .btn-danger { border-color: #f8514950; color: #f85149; }
+    .btn-danger:hover { background: #f8514920; border-color: #f85149; }
+    .btn-green { border-color: #23863650; color: #3fb950; }
+    .btn-green:hover { background: #23863620; border-color: #238636; }
+    .btn-logout { border-color: #f8514930; color: #f85149; }
+    .btn-logout:hover { background: #f8514918; border-color: #f85149; }
+
+    /* ── Layout ── */
+    .admin-body { max-width: 1180px; margin: 0 auto; padding: 24px 24px 48px; }
+
+    /* ── Controls row ── */
+    .controls {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;
+    }
+    .controls select, .controls input[type="text"] {
+      padding: 8px 14px; background: #0d1117; border: 1px solid #30363d;
+      border-radius: 8px; color: #c9d1d9; font-size: 0.85rem; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .controls select:focus, .controls input[type="text"]:focus { border-color: #58a6ff; }
+    .controls select { min-width: 160px; cursor: pointer; }
+    .controls input[type="text"] { min-width: 200px; }
+
+    /* ── Stats ── */
+    .stats-bar { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
     .stat-card {
-      background: #fff; border-radius: 12px; padding: 16px 24px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 130px; text-align: center;
+      flex: 1; min-width: 120px; background: #161b22; border: 1px solid #21262d;
+      border-radius: 12px; padding: 18px 16px; text-align: center;
     }
-    .stat-value { font-size: 1.8rem; font-weight: 700; color: #111; }
-    .stat-label { font-size: 0.8rem; color: #888; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    th { background: #f5f5f5; padding: 12px 16px; text-align: left; font-size: 0.82rem; color: #555; font-weight: 600; border-bottom: 1px solid #eee; }
-    td { padding: 12px 16px; font-size: 0.92rem; color: #333; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .stat-value { font-size: 1.7rem; font-weight: 700; color: #f0f6fc; }
+    .stat-label { font-size: 0.72rem; color: #8b949e; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-value.green { color: #3fb950; }
+    .stat-value.gold { color: #d29922; }
+    .stat-value.red { color: #f85149; }
+
+    /* ── QR section ── */
+    .qr-section {
+      display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+    }
+    .qr-card {
+      background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+      padding: 24px; text-align: center; flex: 1; min-width: 200px;
+    }
+    .qr-card h3 { font-size: 0.88rem; font-weight: 600; color: #f0f6fc; margin-bottom: 14px; }
+    .qr-card canvas { border-radius: 8px; background: #fff; padding: 8px; }
+    .qr-card .qr-url {
+      font-size: 0.72rem; color: #8b949e; margin-top: 10px; word-break: break-all;
+    }
+    .qr-download {
+      margin-top: 10px; display: inline-block; padding: 6px 14px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+      color: #c9d1d9; font-size: 0.78rem; cursor: pointer; text-decoration: none;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .qr-download:hover { background: #30363d; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; border: 1px solid #21262d; border-radius: 12px; background: #0d1117; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 600;
+      color: #8b949e; text-transform: uppercase; letter-spacing: 0.04em;
+      background: #161b22; border-bottom: 1px solid #21262d;
+    }
+    td {
+      padding: 12px 16px; font-size: 0.88rem; color: #c9d1d9;
+      border-bottom: 1px solid #21262d15; vertical-align: top;
+    }
     tr:last-child td { border-bottom: none; }
-    tr.row-red td { background-color: #fff5f5; }
-    tr.row-yellow td { background-color: #fffbf0; }
-    tr.row-green td { background-color: #f5fff8; }
-    .feedback-cell { max-width: 400px; line-height: 1.5; word-break: break-word; }
-    .no-feedback { color: #bbb; font-style: italic; }
-    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+    tr:hover td { background: #161b2240; }
+    .stars-cell { white-space: nowrap; }
+    .stars-gold { color: #d29922; }
+    .stars-red { color: #f85149; }
+    .stars-green { color: #3fb950; }
+    .feedback-cell { max-width: 380px; line-height: 1.55; word-break: break-word; }
+    .no-feedback { color: #484f58; font-style: italic; }
+    .delete-btn {
+      background: none; border: 1px solid transparent; color: #f8514970;
+      cursor: pointer; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .delete-btn:hover { background: #f8514918; border-color: #f8514950; color: #f85149; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 20px; flex-wrap: wrap; }
     .pagination button {
-      padding: 8px 14px; border: 1.5px solid #ddd; background: #fff;
-      border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit;
+      padding: 7px 13px; border: 1px solid #30363d; background: #21262d;
+      border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: #c9d1d9;
+      font-family: inherit; transition: all 0.15s;
     }
-    .pagination button:hover { background: #f5a623; color: #fff; border-color: #f5a623; }
-    .pagination button.active { background: #f5a623; color: #fff; border-color: #f5a623; cursor: default; }
-    .msg { text-align: center; color: #888; padding: 40px; font-size: 1rem; }
-    .msg.error { color: #d0021b; }
-    .logout-btn {
-      padding: 8px 16px; border: 1.5px solid #ddd; background: #fff;
-      border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-family: inherit;
+    .pagination button:hover { background: #30363d; border-color: #8b949e; }
+    .pagination button.active { background: #58a6ff; color: #0e1117; border-color: #58a6ff; cursor: default; }
+
+    /* ── Utility ── */
+    .msg { text-align: center; color: #8b949e; padding: 40px; font-size: 0.92rem; }
+    .msg.error { color: #f85149; }
+
+    /* ── Confirm dialog ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.65);
+      display: flex; align-items: center; justify-content: center; display: none;
     }
-    .logout-btn:hover { background: #d0021b; color: #fff; border-color: #d0021b; }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box {
+      background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+      padding: 32px 28px; max-width: 400px; width: 90%; text-align: center;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .confirm-box h3 { font-size: 1.05rem; color: #f0f6fc; margin-bottom: 10px; }
+    .confirm-box p { font-size: 0.88rem; color: #8b949e; margin-bottom: 22px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .confirm-cancel {
+      padding: 9px 20px; background: #21262d; border: 1px solid #30363d;
+      color: #c9d1d9; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-family: inherit;
+    }
+    .confirm-cancel:hover { background: #30363d; }
+    .confirm-delete {
+      padding: 9px 20px; background: #da3633; border: none;
+      color: #fff; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; font-family: inherit;
+    }
+    .confirm-delete:hover { background: #f85149; }
+
+    @media (max-width: 640px) {
+      .topbar { flex-direction: column; gap: 10px; text-align: center; }
+      .admin-body { padding: 16px 12px 32px; }
+      .controls { flex-direction: column; }
+      .controls select, .controls input[type="text"] { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <div class="admin-wrap">
-    <div class="admin-header">
-      <h1>Hotel Reviews Dashboard</h1>
-      <button class="logout-btn" onclick="logout()">Log Out</button>
+  <!-- Login overlay -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card">
+      <h1>Admin Dashboard</h1>
+      <p>Sign in to manage hotel reviews</p>
+      <input type="text" id="login-user" placeholder="Username" autocomplete="username" />
+      <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password" />
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-error" id="login-error"></div>
     </div>
-
-    <div class="controls">
-      <select id="hotel-select" onchange="loadReviews(1)">
-        <option value="">All Hotels</option>
-      </select>
-    </div>
-
-    <div class="stats-bar">
-      <div class="stat-card">
-        <div class="stat-value" id="stat-total">&#8212;</div>
-        <div class="stat-label">Total Reviews</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-avg">&#8212;</div>
-        <div class="stat-label">Avg Rating (page)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-feedback">&#8212;</div>
-        <div class="stat-label">With Feedback (page)</div>
-      </div>
-    </div>
-
-    <div id="table-container">
-      <div class="msg">Loading&hellip;</div>
-    </div>
-
-    <div class="pagination" id="pagination"></div>
   </div>
+
+  <!-- Confirm dialog -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-msg">This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="confirm-delete" id="confirm-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard (hidden until login) -->
+  <div id="dashboard" style="display:none;">
+    <div class="topbar">
+      <h1>Hotel Reviews Dashboard</h1>
+      <div class="topbar-actions">
+        <button class="btn-sm btn-green" id="export-btn" onclick="exportCSV()">Export CSV</button>
+        <button class="btn-sm btn-danger" id="clear-btn" onclick="confirmClearAll()">Clear All Reviews</button>
+        <button class="btn-sm btn-logout" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+
+    <div class="admin-body">
+      <!-- Controls -->
+      <div class="controls">
+        <select id="hotel-select" onchange="onFilterChange()">
+          <option value="">All Hotels</option>
+        </select>
+        <select id="rating-filter" onchange="onFilterChange()">
+          <option value="">All Ratings</option>
+          <option value="5">5 Stars</option>
+          <option value="4">4 Stars</option>
+          <option value="3">3 Stars</option>
+          <option value="2">2 Stars</option>
+          <option value="1">1 Star</option>
+        </select>
+        <input type="text" id="search-input" placeholder="Search feedback..." onkeydown="if(event.key==='Enter')onFilterChange()" />
+        <button class="btn-sm" onclick="onFilterChange()">Search</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-card"><div class="stat-value" id="stat-total">&#8212;</div><div class="stat-label">Total Reviews</div></div>
+        <div class="stat-card"><div class="stat-value gold" id="stat-avg">&#8212;</div><div class="stat-label">Avg Rating</div></div>
+        <div class="stat-card"><div class="stat-value green" id="stat-high">&#8212;</div><div class="stat-label">4-5 Stars</div></div>
+        <div class="stat-card"><div class="stat-value red" id="stat-low">&#8212;</div><div class="stat-label">1-2 Stars</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-feedback">&#8212;</div><div class="stat-label">With Feedback</div></div>
+      </div>
+
+      <!-- QR Codes -->
+      <div class="qr-section" id="qr-section"></div>
+
+      <!-- Table -->
+      <div class="table-wrap" id="table-container">
+        <div class="msg">Loading&hellip;</div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- QR library (lightweight, no CDN build needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
   <script>
     var currentPage = 1;
     var PAGE_LIMIT = 50;
     var credentials = null;
+    var hotelList = [];
+    var confirmCallback = null;
 
-    // ── Credentials ───────────────────────────────────────────────────────────
-    function getCredentials() {
-      var stored = sessionStorage.getItem('adminCreds');
-      if (stored) return stored;
-      var user = window.prompt('Admin username:');
-      if (!user && user !== '') return null;
-      var pass = window.prompt('Admin password:');
-      if (pass === null) return null;
+    // ── Login ─────────────────────────────────────────────────────────────────
+    function doLogin() {
+      var user = document.getElementById('login-user').value.trim();
+      var pass = document.getElementById('login-pass').value;
+      var errEl = document.getElementById('login-error');
+      if (!user || !pass) { errEl.textContent = 'Please enter username and password.'; return; }
+
       var encoded = btoa(user + ':' + pass);
-      sessionStorage.setItem('adminCreds', encoded);
-      return encoded;
+      errEl.textContent = '';
+      document.getElementById('login-btn').disabled = true;
+      document.getElementById('login-btn').textContent = 'Signing in...';
+
+      fetch('/api/admin/config', { headers: { 'Authorization': 'Basic ' + encoded } })
+        .then(function(r) {
+          if (r.status === 401) { throw new Error('bad_creds'); }
+          if (!r.ok) throw new Error('server');
+          return r.json();
+        })
+        .then(function(data) {
+          credentials = encoded;
+          sessionStorage.setItem('adminCreds', encoded);
+          document.getElementById('login-overlay').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          initDashboard(data);
+        })
+        .catch(function(e) {
+          if (e.message === 'bad_creds') {
+            errEl.textContent = 'Invalid username or password.';
+          } else {
+            errEl.textContent = 'Connection failed. Try again.';
+          }
+          document.getElementById('login-btn').disabled = false;
+          document.getElementById('login-btn').textContent = 'Sign In';
+        });
     }
 
-    function authHeaders() {
-      return { 'Authorization': 'Basic ' + credentials };
+    // Enter key on login fields
+    document.getElementById('login-pass').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('login-user').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('login-pass').focus();
+    });
+
+    // ── Check stored session ─────────────────────────────────────────────────
+    (function() {
+      var stored = sessionStorage.getItem('adminCreds');
+      if (!stored) return;
+      fetch('/api/admin/config', { headers: { 'Authorization': 'Basic ' + stored } })
+        .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function(data) {
+          credentials = stored;
+          document.getElementById('login-overlay').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          initDashboard(data);
+        })
+        .catch(function() { sessionStorage.removeItem('adminCreds'); });
+    })();
+
+    function authHeaders() { return { 'Authorization': 'Basic ' + credentials }; }
+    function logout() { sessionStorage.removeItem('adminCreds'); window.location.reload(); }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    function initDashboard(configData) {
+      hotelList = configData.hotels;
+      var select = document.getElementById('hotel-select');
+      hotelList.forEach(function(h) {
+        var opt = document.createElement('option');
+        opt.value = h.slug;
+        opt.textContent = h.name;
+        select.appendChild(opt);
+      });
+      renderQRCodes();
+      loadReviews(1);
     }
 
-    function logout() {
-      sessionStorage.removeItem('adminCreds');
-      window.location.reload();
+    // ── QR code generation ───────────────────────────────────────────────────
+    function renderQRCodes() {
+      var container = document.getElementById('qr-section');
+      container.innerHTML = '';
+      hotelList.forEach(function(h) {
+        var card = document.createElement('div');
+        card.className = 'qr-card';
+        card.innerHTML = '<h3>' + escapeHtml(h.name) + '</h3>';
+        var canvas = document.createElement('canvas');
+        card.appendChild(canvas);
+        var urlDiv = document.createElement('div');
+        urlDiv.className = 'qr-url';
+        urlDiv.textContent = h.guestUrl;
+        card.appendChild(urlDiv);
+        var dl = document.createElement('a');
+        dl.className = 'qr-download';
+        dl.textContent = 'Download QR';
+        dl.download = 'qr-' + h.slug + '.png';
+        card.appendChild(dl);
+        container.appendChild(card);
+
+        if (typeof QRCode !== 'undefined') {
+          QRCode.toCanvas(canvas, h.guestUrl, {
+            width: 180, margin: 1,
+            color: { dark: '#0e1117', light: '#ffffff' }
+          }, function() {
+            dl.href = canvas.toDataURL('image/png');
+          });
+        }
+      });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Confirm dialog ───────────────────────────────────────────────────────
+    function showConfirm(title, msg, btnLabel, callback) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-msg').textContent = msg;
+      document.getElementById('confirm-ok').textContent = btnLabel;
+      confirmCallback = callback;
+      document.getElementById('confirm-overlay').classList.add('active');
+    }
+    function closeConfirm() {
+      document.getElementById('confirm-overlay').classList.remove('active');
+      confirmCallback = null;
+    }
+    document.getElementById('confirm-ok').addEventListener('click', function() {
+      if (confirmCallback) confirmCallback();
+      closeConfirm();
+    });
+
+    // ── Delete single review ─────────────────────────────────────────────────
+    function deleteOne(id) {
+      showConfirm('Delete Review', 'Permanently delete this review entry? This cannot be undone.', 'Delete', function() {
+        fetch('/api/admin/reviews/' + id, { method: 'DELETE', headers: authHeaders() })
+          .then(function(r) { return r.json(); })
+          .then(function() { loadReviews(currentPage); })
+          .catch(function() { alert('Delete failed.'); });
+      });
+    }
+
+    // ── Clear all reviews for hotel ─────────────────────────────────────────
+    function confirmClearAll() {
+      var slug = document.getElementById('hotel-select').value;
+      if (!slug) { alert('Please select a specific hotel first.'); return; }
+      var name = '';
+      hotelList.forEach(function(h) { if (h.slug === slug) name = h.name; });
+      showConfirm('Clear All Reviews', 'Delete ALL reviews for ' + name + '? This cannot be undone.', 'Clear All', function() {
+        fetch('/api/admin/reviews?hotel=' + encodeURIComponent(slug), { method: 'DELETE', headers: authHeaders() })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            alert('Deleted ' + (data.deleted || 0) + ' reviews.');
+            loadReviews(1);
+          })
+          .catch(function() { alert('Clear failed.'); });
+      });
+    }
+
+    // ── Export CSV ────────────────────────────────────────────────────────────
+    function exportCSV() {
+      var slug = document.getElementById('hotel-select').value;
+      var url = '/api/admin/export';
+      if (slug) url += '?hotel=' + encodeURIComponent(slug);
+      var a = document.createElement('a');
+      a.href = url;
+      a.style.display = 'none';
+      // We need auth — use fetch and blob
+      fetch(url, { headers: authHeaders() })
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+          var link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = slug ? 'reviews-' + slug + '.csv' : 'reviews-all.csv';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        })
+        .catch(function() { alert('Export failed.'); });
+    }
+
+    // ── Filter change ────────────────────────────────────────────────────────
+    function onFilterChange() { loadReviews(1); }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
     function starsDisplay(rating) {
       var s = '';
       for (var i = 1; i <= 5; i++) { s += i <= rating ? '\u2605' : '\u2606'; }
       return s;
     }
-
-    function rowClass(rating) {
-      if (rating <= 2) return 'row-red';
-      if (rating === 3) return 'row-yellow';
-      return 'row-green';
+    function starsClass(rating) {
+      if (rating <= 2) return 'stars-red';
+      if (rating === 3) return 'stars-gold';
+      return 'stars-green';
     }
-
     function formatDate(iso) {
-      if (!iso) return '—';
+      if (!iso) return '\u2014';
       var d = new Date(iso);
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-
     function escapeHtml(str) {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
-    // ── Load hotel list ───────────────────────────────────────────────────────
-    function loadHotels() {
-      fetch('/api/admin/config', { headers: authHeaders() })
-        .then(function(r) {
-          if (r.status === 401) { sessionStorage.removeItem('adminCreds'); window.location.reload(); return; }
-          return r.json();
-        })
-        .then(function(data) {
-          if (!data) return;
-          var select = document.getElementById('hotel-select');
-          data.hotels.forEach(function(h) {
-            var opt = document.createElement('option');
-            opt.value = h.slug;
-            opt.textContent = h.name;
-            select.appendChild(opt);
-          });
-        })
-        .catch(function() {
-          document.getElementById('table-container').innerHTML = '<div class="msg error">Failed to load hotel list.</div>';
-        });
-    }
-
-    // ── Load reviews ──────────────────────────────────────────────────────────
+    // ── Load reviews ────────────────────────────────────────────────────────
     function loadReviews(page) {
       currentPage = page;
-      var hotelSlug = document.getElementById('hotel-select').value;
+      var slug = document.getElementById('hotel-select').value;
+      var rating = document.getElementById('rating-filter').value;
+      var search = document.getElementById('search-input').value.trim();
       var url = '/api/admin/reviews?page=' + page;
-      if (hotelSlug) url += '&hotel=' + encodeURIComponent(hotelSlug);
+      if (slug) url += '&hotel=' + encodeURIComponent(slug);
+      if (rating) url += '&rating=' + rating;
+      if (search) url += '&search=' + encodeURIComponent(search);
 
       document.getElementById('table-container').innerHTML = '<div class="msg">Loading&hellip;</div>';
 
@@ -185,64 +499,59 @@
         });
     }
 
-    // ── Render stats ──────────────────────────────────────────────────────────
+    // ── Stats ────────────────────────────────────────────────────────────────
     function renderStats(reviews, total) {
       document.getElementById('stat-total').textContent = total;
       if (reviews.length > 0) {
-        var avg = reviews.reduce(function(sum, r) { return sum + r.rating; }, 0) / reviews.length;
+        var avg = reviews.reduce(function(s,r){return s+r.rating;},0) / reviews.length;
         document.getElementById('stat-avg').textContent = avg.toFixed(1) + ' \u2605';
-        var withFb = reviews.filter(function(r) { return r.feedback; }).length;
-        document.getElementById('stat-feedback').textContent = withFb + ' / ' + reviews.length;
+        var high = reviews.filter(function(r){return r.rating>=4;}).length;
+        var low = reviews.filter(function(r){return r.rating<=2;}).length;
+        var withFb = reviews.filter(function(r){return r.feedback;}).length;
+        document.getElementById('stat-high').textContent = high;
+        document.getElementById('stat-low').textContent = low;
+        document.getElementById('stat-feedback').textContent = withFb + '/' + reviews.length;
       } else {
         document.getElementById('stat-avg').textContent = '\u2014';
+        document.getElementById('stat-high').textContent = '\u2014';
+        document.getElementById('stat-low').textContent = '\u2014';
         document.getElementById('stat-feedback').textContent = '\u2014';
       }
     }
 
-    // ── Render table ──────────────────────────────────────────────────────────
+    // ── Table ────────────────────────────────────────────────────────────────
     function renderTable(reviews) {
       if (!reviews || reviews.length === 0) {
         document.getElementById('table-container').innerHTML = '<div class="msg">No reviews found.</div>';
         return;
       }
-      var html = '<table><thead><tr><th>Date</th><th>Hotel</th><th>Rating</th><th>Feedback</th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>Date</th><th>Hotel</th><th>Rating</th><th>Feedback</th><th></th></tr></thead><tbody>';
       reviews.forEach(function(r) {
-        html += '<tr class="' + rowClass(r.rating) + '">';
+        html += '<tr>';
         html += '<td>' + formatDate(r.created_at) + '</td>';
-        html += '<td>' + escapeHtml(r.hotel_slug || '—') + '</td>';
-        html += '<td>' + starsDisplay(r.rating) + ' (' + r.rating + ')</td>';
+        html += '<td>' + escapeHtml(r.hotel_slug || '\u2014') + '</td>';
+        html += '<td class="stars-cell"><span class="' + starsClass(r.rating) + '">' + starsDisplay(r.rating) + '</span> (' + r.rating + ')</td>';
         html += '<td class="feedback-cell">' + (r.feedback ? escapeHtml(r.feedback) : '<span class="no-feedback">No feedback</span>') + '</td>';
+        html += '<td><button class="delete-btn" onclick="deleteOne(' + r.id + ')" title="Delete">&#x1F5D1;</button></td>';
         html += '</tr>';
       });
       html += '</tbody></table>';
       document.getElementById('table-container').innerHTML = html;
     }
 
-    // ── Render pagination ─────────────────────────────────────────────────────
+    // ── Pagination ──────────────────────────────────────────────────────────
     function renderPagination(total) {
       var totalPages = Math.ceil(total / PAGE_LIMIT);
-      var pagination = document.getElementById('pagination');
-      pagination.innerHTML = '';
+      var el = document.getElementById('pagination');
+      el.innerHTML = '';
       if (totalPages <= 1) return;
       for (var i = 1; i <= totalPages; i++) {
         var btn = document.createElement('button');
         btn.textContent = i;
         if (i === currentPage) btn.classList.add('active');
-        (function(page) {
-          btn.onclick = function() { loadReviews(page); };
-        })(i);
-        pagination.appendChild(btn);
+        (function(p) { btn.onclick = function() { loadReviews(p); }; })(i);
+        el.appendChild(btn);
       }
-    }
-
-    // ── Init ──────────────────────────────────────────────────────────────────
-    credentials = getCredentials();
-    if (!credentials) {
-      document.querySelector('.admin-wrap').innerHTML =
-        '<div class="msg error">No credentials provided. <a href="/admin">Try again</a></div>';
-    } else {
-      loadHotels();
-      loadReviews(1);
     }
   </script>
 </body>
