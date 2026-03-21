@@ -63,7 +63,7 @@ function getHotel(slug) {
 // ─────────────────────────────────────────────
 function basicAuth(req, res, next) {
   const authHeader = req.headers["authorization"];
-  const isApi = req.path.startsWith('/api/');
+  const isApi = req.path.startsWith("/api/");
   if (!authHeader || !authHeader.startsWith("Basic ")) {
     if (!isApi) res.set("WWW-Authenticate", 'Basic realm="Admin"');
     return res.status(401).json({ error: "Authentication required." });
@@ -74,11 +74,15 @@ function basicAuth(req, res, next) {
   const pass = decoded.slice(colonIdx + 1);
   if (user !== process.env.ADMIN_USER) {
     if (!isApi) res.set("WWW-Authenticate", 'Basic realm="Admin"');
-    return res.status(401).json({ error: "Invalid credentials.", code: "wrong_user" });
+    return res
+      .status(401)
+      .json({ error: "Invalid credentials.", code: "wrong_user" });
   }
   if (pass !== process.env.ADMIN_PASS) {
     if (!isApi) res.set("WWW-Authenticate", 'Basic realm="Admin"');
-    return res.status(401).json({ error: "Invalid credentials.", code: "wrong_pass" });
+    return res
+      .status(401)
+      .json({ error: "Invalid credentials.", code: "wrong_pass" });
   }
   next();
 }
