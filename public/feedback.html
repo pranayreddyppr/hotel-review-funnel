@@ -10,10 +10,11 @@
 </head>
 <body>
   <div class="container">
+    <div class="step-pill">Step 2 of 2 &nbsp;&middot;&nbsp; Your Feedback</div>
     <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
-    <h1 class="feedback-heading">We’d love to do better.</h1>
+    <h1 class="feedback-heading">We'd love to hear from you.</h1>
     <div class="divider"></div>
-    <p class="feedback-sub">Your experience matters to us. Please share what happened — we read every response and use your feedback to make real changes.</p>
+    <p class="feedback-sub">Your experience matters to us. Please share what happened &mdash; every response is personally reviewed by our team.</p>
 
     <textarea
       id="feedback-text"
@@ -70,10 +71,13 @@
       counter.textContent = len + ' / 500';
       if (len >= 500) {
         counter.style.color = '#ff6b6b';
+        counter.classList.remove('warning');
       } else if (len > 400) {
-        counter.style.color = '#D4AF37';
+        counter.style.color = '';
+        counter.classList.add('warning');
       } else {
         counter.style.color = 'rgba(255,255,255,0.25)';
+        counter.classList.remove('warning');
       }
     });
 
@@ -128,6 +132,7 @@
       r.setProperty('--theme-card-border', t.cardBorder);
       r.setProperty('--theme-card-accent', t.cardAccent);
       document.body.classList.add('themed');
+      if (t.slug) document.body.dataset.hotel = t.slug;
     }
   </script>
 </body>
