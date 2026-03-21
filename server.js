@@ -72,9 +72,13 @@ function basicAuth(req, res, next) {
   const colonIdx = decoded.indexOf(":");
   const user = decoded.slice(0, colonIdx);
   const pass = decoded.slice(colonIdx + 1);
-  if (user !== process.env.ADMIN_USER || pass !== process.env.ADMIN_PASS) {
+  if (user !== process.env.ADMIN_USER) {
     if (!isApi) res.set("WWW-Authenticate", 'Basic realm="Admin"');
-    return res.status(401).json({ error: "Invalid credentials." });
+    return res.status(401).json({ error: "Invalid credentials.", code: "wrong_user" });
+  }
+  if (pass !== process.env.ADMIN_PASS) {
+    if (!isApi) res.set("WWW-Authenticate", 'Basic realm="Admin"');
+    return res.status(401).json({ error: "Invalid credentials.", code: "wrong_pass" });
   }
   next();
 }

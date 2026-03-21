@@ -576,17 +576,17 @@
         headers: { 'Authorization': 'Basic ' + token }
       }).then(function (r) {
         if (r.status === 401) {
-          r.text().then(function(txt) {
-            console.error('[LOGIN] 401 Unauthorized. Response:', txt);
+          return r.json().then(function(body) {
+            var code = (body && body.code) || 'unauthorized';
+            var err = new Error(code);
+            err.code = code;
+            throw err;
+          }).catch(function(e) {
+            if (e.code) throw e;
+            throw new Error('unauthorized');
           });
-          throw new Error('unauthorized');
         }
-        if (!r.ok) {
-          r.text().then(function(txt) {
-            console.error('[LOGIN] Server error. Status:', r.status, 'Response:', txt);
-          });
-          throw new Error('server_error');
-        }
+        if (!r.ok) throw new Error('server_error');
         return r.json();
       });
     }
@@ -645,14 +645,22 @@
         })
         .catch(function (e) {
           setBusy(false);
-          if (e.message === 'unauthorized') {
-            showError('Invalid username or password. Please try again.');
+          if (e.message === 'wrong_user' || e.code === 'wrong_user') {
+            showError('Incorrect username. Please try again.');
+            usernameEl.select();
+            usernameEl.focus();
+          } else if (e.message === 'wrong_pass' || e.code === 'wrong_pass') {
+            showError('Incorrect password. Please try again.');
+            passwordEl.value = '';
+            passwordEl.focus();
+          } else if (e.message === 'server_error') {
+            showError('Connection error — please try again.');
           } else {
-            showError('Connection error. Please check your connection and try again.');
+            showError('Incorrect username or password. Please try again.');
+            passwordEl.value = '';
+            passwordEl.focus();
           }
           shakeCard();
-          passwordEl.value = '';
-          passwordEl.focus();
         });
     }
 
