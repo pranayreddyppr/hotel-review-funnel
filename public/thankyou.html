@@ -6,7 +6,6 @@
   <title>Thank You</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="style.css" />
   <script>
     (function() {
       try {
@@ -26,11 +25,12 @@
         r.setProperty('--theme-card-border', t.cardBorder);
         r.setProperty('--theme-card-accent', t.cardAccent);
         var st = document.createElement('style');
-        st.textContent = 'body{background:' + t.gradient + '}';
+        st.textContent = 'html,body{background:' + t.gradient + ' !important;}';
         document.head.appendChild(st);
       } catch(e) {}
     })();
   </script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
