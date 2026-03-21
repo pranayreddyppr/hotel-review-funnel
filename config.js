@@ -42,8 +42,8 @@ module.exports = {
         accentGlow: "rgba(0,102,178,0.42)",
         gradient:
           "linear-gradient(145deg, #06101F 0%, #0C1E3D 45%, #071628 100%)",
-        starColor: "#4AAFF5",
-        starGlow: "rgba(74,175,245,0.62)",
+        starColor: "#D4AF37",
+        starGlow: "rgba(212,175,55,0.6)",
         btnGradient:
           "linear-gradient(135deg, #004F9F 0%, #0066B2 55%, #007ED4 100%)",
         btnText: "#ffffff",
