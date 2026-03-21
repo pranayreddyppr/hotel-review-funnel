@@ -418,7 +418,11 @@
     con.innerHTML = '';
     if (!hotelList || !hotelList.length) {
       con.innerHTML = '<div class="msg error">No hotels found. QR codes cannot be generated.<br>Check your API credentials or contact support.</div>';
-      console.error('[QR] No hotels loaded:', hotelList);
+      // Try to fetch and log the actual API response for debugging
+      fetch('/api/admin/config', { headers: ah() })
+        .then(function(r) { return r.text(); })
+        .then(function(txt) { console.error('[QR] No hotels loaded. API response:', txt); })
+        .catch(function(e) { console.error('[QR] Error fetching /api/admin/config:', e); });
       return;
     }
     hotelList.forEach(function(h) {
