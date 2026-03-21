@@ -416,6 +416,11 @@
   function renderQR() {
     var con = document.getElementById('qr-section');
     con.innerHTML = '';
+    if (!hotelList || !hotelList.length) {
+      con.innerHTML = '<div class="msg error">No hotels found. QR codes cannot be generated.<br>Check your API credentials or contact support.</div>';
+      console.error('[QR] No hotels loaded:', hotelList);
+      return;
+    }
     hotelList.forEach(function(h) {
       var card = document.createElement('div');
       card.className = 'qr-card';
@@ -468,9 +473,12 @@
       con.appendChild(card);
 
       if (typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvas, h.guestUrl, { width: 200, margin: 1, color: { dark: '#0d1117', light: '#ffffff' } }, function() {
+        QRCode.toCanvas(canvas, h.guestUrl, { width: 200, margin: 1, color: { dark: '#0d1117', light: '#ffffff' } }, function(err) {
+          if (err) { console.error('[QR] QRCode.toCanvas error:', err, h); }
           dlA.href = canvas.toDataURL('image/png');
         });
+      } else {
+        console.error('[QR] QRCode library not loaded');
       }
     });
   }
