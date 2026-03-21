@@ -7,6 +7,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
+  <script>
+    (function() {
+      try {
+        var s = new URLSearchParams(location.search).get('hotel');
+        if (!s) return;
+        var raw = sessionStorage.getItem('ht_' + s);
+        if (!raw) return;
+        var t = JSON.parse(raw);
+        var r = document.documentElement.style;
+        r.setProperty('--theme-gradient', t.gradient);
+        r.setProperty('--theme-accent', t.accent);
+        r.setProperty('--theme-star', t.starColor);
+        r.setProperty('--theme-star-glow', t.starGlow);
+        r.setProperty('--theme-btn-gradient', t.btnGradient);
+        r.setProperty('--theme-btn-text', t.btnText);
+        r.setProperty('--theme-divider', t.dividerColor);
+        r.setProperty('--theme-card-border', t.cardBorder);
+        r.setProperty('--theme-card-accent', t.cardAccent);
+        var st = document.createElement('style');
+        st.textContent = 'body{background:' + t.gradient + '}';
+        document.head.appendChild(st);
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="container">

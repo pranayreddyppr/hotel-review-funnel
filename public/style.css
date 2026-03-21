@@ -14,8 +14,14 @@
 /* ─────────────────────────────────────────────
    PAGE BODY
 ───────────────────────────────────────────── */
+html {
+  height: -webkit-fill-available;
+  background: #0d0d0d; /* dark fallback — prevents white Safari safe-area gap */
+}
+
 body {
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport — fixes Safari URL-bar + safe-area */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,7 +35,7 @@ body {
   background: linear-gradient(145deg, #0a0a18 0%, #12122e 45%, #0a1520 100%);
   color: #fff;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden; /* keep orbs clipped; allow vertical scroll on mobile */
 }
 
 /* Ambient glow orbs */

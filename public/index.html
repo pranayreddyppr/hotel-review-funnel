@@ -66,7 +66,7 @@
               logoEl.alt = data.hotelName + ' logo';
               logoEl.style.display = 'block';
             }
-            if (data.theme) { applyTheme(data.theme); }
+            if (data.theme) { applyTheme(data.theme); try { sessionStorage.setItem('ht_' + hotelSlug, JSON.stringify(data.theme)); } catch(e) {} }
           })
           .catch(function() {
             if (attempts < 3) {
