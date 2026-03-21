@@ -40,8 +40,9 @@ const adminLimiter = rateLimit({
   message: { error: "Too many requests. Please try again later." },
 });
 
-// Block direct URL access to admin.html — must go through /admin with auth
+// Block direct URL access to admin.html / login.html — use /admin and /login routes
 app.get("/admin.html", (req, res) => res.status(404).end());
+app.get("/login.html", (req, res) => res.status(404).end());
 
 // Serve static files (HTML, CSS) from the "public" folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -178,9 +179,17 @@ app.post("/api/feedback", apiLimiter, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// GET /admin — password-protected dashboard
+// GET /login — standalone login page
 // ─────────────────────────────────────────────
-app.get("/admin", adminLimiter, basicAuth, (req, res) => {
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+// ─────────────────────────────────────────────
+// GET /admin — dashboard (auth handled client-side via sessionStorage)
+// All data API endpoints below still enforce basicAuth server-side.
+// ─────────────────────────────────────────────
+app.get("/admin", adminLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 

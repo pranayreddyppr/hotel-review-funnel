@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Sign In — Hotel Reviews</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080c12;
+      --card: rgba(14, 20, 30, 0.88);
+      --border: rgba(255,255,255,0.07);
+      --border-focus: #3b82f6;
+      --text: #e8edf5;
+      --text2: #94a3b8;
+      --mute: #4b5a6e;
+      --blue: #3b82f6;
+      --blue-glow: rgba(59,130,246,0.25);
+      --red: #ef4444;
+      --red-glow: rgba(239,68,68,0.18);
+      --green: #22c55e;
+      --input-bg: rgba(255,255,255,0.04);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Animated background ── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(37,99,235,0.22) 0%, transparent 70%);
+      top: -10%; left: -8%;
+      animation-delay: 0s; animation-duration: 14s;
+    }
+    .orb-2 {
+      width: 360px; height: 360px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+      bottom: -5%; right: -5%;
+      animation-delay: 3s; animation-duration: 16s;
+    }
+    .orb-3 {
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
+      top: 40%; right: 10%;
+      animation-delay: 6s; animation-duration: 11s;
+    }
+
+    @keyframes orbFloat {
+      0%   { opacity: 0; transform: scale(0.9) translate(0,0); }
+      25%  { opacity: 1; }
+      50%  { transform: scale(1.05) translate(20px, -20px); }
+      75%  { opacity: 0.8; }
+      100% { opacity: 0; transform: scale(0.95) translate(-10px, 15px); }
+    }
+
+    /* ── Grid pattern ── */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 52px 52px;
+      pointer-events: none;
+    }
+
+    /* ── Card wrapper ── */
+    .card-wrap {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    /* ── Login card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 44px 40px 40px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 32px 80px rgba(0,0,0,0.6),
+        0 0 100px rgba(37,99,235,0.06);
+      animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* shake on bad creds */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15%, 55%  { transform: translateX(-8px); }
+      35%, 75%  { transform: translateX(8px); }
+    }
+    .card.shake { animation: shake 0.42s cubic-bezier(0.36,0.07,0.19,0.97); }
+
+    /* ── Logo block ── */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f2044 100%);
+      border: 1px solid rgba(59,130,246,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 18px;
+      box-shadow:
+        0 8px 24px rgba(0,0,0,0.4),
+        0 0 0 1px rgba(59,130,246,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: iconPulse 3.5s ease-in-out infinite;
+    }
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.06); }
+      50%       { box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 4px rgba(59,130,246,0.12), inset 0 1px 0 rgba(255,255,255,0.08); }
+    }
+    .logo-wrap h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 5px;
+    }
+    .logo-wrap p {
+      font-size: 0.83rem;
+      color: var(--text2);
+      font-weight: 400;
+    }
+
+    /* ── Form fields ── */
+    .field {
+      margin-bottom: 14px;
+    }
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 7px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      opacity: 0.35;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 1;
+    }
+    .input-wrap:focus-within .input-icon {
+      opacity: 0.75;
+    }
+    .input-wrap input {
+      display: block;
+      width: 100%;
+      padding: 13px 44px 13px 42px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 0.92rem;
+      font-family: inherit;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .input-wrap input::placeholder {
+      color: var(--mute);
+      font-weight: 400;
+    }
+    .input-wrap input:focus {
+      border-color: var(--border-focus);
+      background: rgba(59,130,246,0.04);
+      box-shadow:
+        0 0 0 3px var(--blue-glow),
+        0 2px 8px rgba(0,0,0,0.2);
+    }
+    /* glow pulse when focused */
+    .input-wrap input:focus {
+      animation: inputGlow 2s ease-in-out infinite;
+    }
+    @keyframes inputGlow {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(59,130,246,0.2), 0 2px 8px rgba(0,0,0,0.2); }
+      50%       { box-shadow: 0 0 0 4px rgba(59,130,246,0.32), 0 2px 12px rgba(37,99,235,0.18); }
+    }
+
+    /* password toggle eye */
+    .eye-btn {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--mute);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 1rem;
+      line-height: 1;
+      transition: color 0.2s;
+      z-index: 1;
+    }
+    .eye-btn:hover { color: var(--text2); }
+
+    /* ── Remember me ── */
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 22px;
+      margin-top: 4px;
+    }
+    .remember input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .remember label {
+      font-size: 0.8rem;
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ── Sign in button ── */
+    .signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+      color: #fff;
+      border: none;
+      border-radius: 13px;
+      font-size: 0.93rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.18s, transform 0.14s, box-shadow 0.18s;
+      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4), 0 1px 0 rgba(255,255,255,0.12) inset;
+    }
+    .signin-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+    .signin-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(37,99,235,0.5), 0 1px 0 rgba(255,255,255,0.14) inset;
+    }
+    .signin-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .signin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    .spinner.on { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error message ── */
+    .error-msg {
+      min-height: 36px;
+      margin-top: 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      line-height: 1.5;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
+    }
+    .error-msg.show {
+      max-height: 80px;
+      opacity: 1;
+      padding: 10px 13px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.22);
+      color: #fca5a5;
+    }
+    .error-icon { margin-right: 5px; }
+
+    /* ── Divider / footer ── */
+    .card-footer {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .card-footer p {
+      font-size: 0.74rem;
+      color: var(--mute);
+    }
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 5px;
+      vertical-align: middle;
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50%       { box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+    }
+
+    /* ── Loading overlay (auto-login check) ── */
+    .checking-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.3s ease;
+    }
+    .checking-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .check-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(59,130,246,0.18);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .checking-overlay p {
+      font-size: 0.82rem;
+      color: var(--mute);
+      font-weight: 500;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 36px 24px 32px; }
+      .card-wrap { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- checking existing session -->
+  <div class="checking-overlay" id="check-overlay">
+    <div class="check-spinner"></div>
+    <p>Checking session…</p>
+  </div>
+
+  <!-- Animated background -->
+  <div class="bg-canvas">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <!-- Login card -->
+  <div class="card-wrap">
+    <div class="card" id="login-card">
+
+      <!-- Header -->
+      <div class="logo-wrap">
+        <div class="logo-icon">🏨</div>
+        <h1>Admin Sign In</h1>
+        <p>Hotel Review Dashboard</p>
+      </div>
+
+      <!-- Username -->
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Enter your username"
+            autocomplete="username"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+          <button class="eye-btn" type="button" id="eye-toggle" aria-label="Toggle password visibility" tabindex="-1">
+            👁
+          </button>
+        </div>
+      </div>
+
+      <!-- Remember me -->
+      <div class="remember">
+        <input type="checkbox" id="remember" />
+        <label for="remember">Keep me signed in</label>
+      </div>
+
+      <!-- Submit button -->
+      <button class="signin-btn" id="signin-btn" type="button">
+        <div class="spinner" id="btn-spinner"></div>
+        <span id="btn-text">Sign In</span>
+      </button>
+
+      <!-- Error message -->
+      <div class="error-msg" id="error-msg" role="alert" aria-live="polite"></div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <p><span class="status-dot"></span>Secure hotel review management</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    var ADMIN_PATH = '/admin';
+    var checkOverlay = document.getElementById('check-overlay');
+    var loginCard    = document.getElementById('login-card');
+    var signinBtn    = document.getElementById('signin-btn');
+    var btnSpinner   = document.getElementById('btn-spinner');
+    var btnText      = document.getElementById('btn-text');
+    var errorMsg     = document.getElementById('error-msg');
+    var usernameEl   = document.getElementById('username');
+    var passwordEl   = document.getElementById('password');
+    var rememberEl   = document.getElementById('remember');
+    var eyeToggle    = document.getElementById('eye-toggle');
+
+    // ── Password visibility toggle ──────────────────────────────
+    eyeToggle.addEventListener('click', function () {
+      var isPassword = passwordEl.type === 'password';
+      passwordEl.type = isPassword ? 'text' : 'password';
+      eyeToggle.textContent = isPassword ? '🙈' : '👁';
+      passwordEl.focus();
+    });
+
+    // ── Show / hide error ───────────────────────────────────────
+    function showError(msg) {
+      errorMsg.innerHTML = '<span class="error-icon">⚠️</span>' + msg;
+      errorMsg.classList.add('show');
+    }
+    function clearError() {
+      errorMsg.classList.remove('show');
+      errorMsg.textContent = '';
+    }
+
+    // ── Button busy state ───────────────────────────────────────
+    function setBusy(on) {
+      signinBtn.disabled = on;
+      btnSpinner.className = on ? 'spinner on' : 'spinner';
+      btnText.textContent  = on ? 'Signing in…' : 'Sign In';
+    }
+
+    // ── Shake card on bad creds ─────────────────────────────────
+    function shakeCard() {
+      loginCard.classList.remove('shake');
+      void loginCard.offsetWidth; // force reflow
+      loginCard.classList.add('shake');
+      loginCard.addEventListener('animationend', function () {
+        loginCard.classList.remove('shake');
+      }, { once: true });
+    }
+
+    // ── Build Basic Auth token ──────────────────────────────────
+    function buildToken(user, pass) {
+      return btoa(unescape(encodeURIComponent(user + ':' + pass)));
+    }
+
+    // ── Persist / retrieve creds ────────────────────────────────
+    function saveSession(token, persistent) {
+      sessionStorage.setItem('adminCreds', token);
+      if (persistent) localStorage.setItem('adminCreds', token);
+    }
+    function getSavedCreds() {
+      return sessionStorage.getItem('adminCreds') || localStorage.getItem('adminCreds') || null;
+    }
+    function clearSavedCreds() {
+      sessionStorage.removeItem('adminCreds');
+      localStorage.removeItem('adminCreds');
+    }
+
+    // ── Validate creds against API ──────────────────────────────
+    function validateToken(token) {
+      return fetch('/api/admin/config', {
+        headers: { 'Authorization': 'Basic ' + token }
+      }).then(function (r) {
+        if (r.status === 401) throw new Error('unauthorized');
+        if (!r.ok) throw new Error('server_error');
+        return r.json();
+      });
+    }
+
+    // ── Check existing session on page load ─────────────────────
+    (function checkExistingSession() {
+      var saved = getSavedCreds();
+      if (!saved) {
+        checkOverlay.classList.add('hidden');
+        setTimeout(function () { checkOverlay.style.display = 'none'; }, 350);
+        usernameEl.focus();
+        return;
+      }
+      validateToken(saved)
+        .then(function () {
+          // valid — go straight to dashboard
+          sessionStorage.setItem('adminCreds', saved);
+          window.location.replace(ADMIN_PATH);
+        })
+        .catch(function () {
+          clearSavedCreds();
+          checkOverlay.classList.add('hidden');
+          setTimeout(function () { checkOverlay.style.display = 'none'; }, 350);
+          usernameEl.focus();
+        });
+    })();
+
+    // ── Main sign-in ────────────────────────────────────────────
+    function doLogin() {
+      clearError();
+      var user = usernameEl.value.trim();
+      var pass = passwordEl.value;
+
+      if (!user) {
+        showError('Please enter your username.');
+        usernameEl.focus();
+        return;
+      }
+      if (!pass) {
+        showError('Please enter your password.');
+        passwordEl.focus();
+        return;
+      }
+
+      var token = buildToken(user, pass);
+      setBusy(true);
+
+      validateToken(token)
+        .then(function () {
+          saveSession(token, rememberEl.checked);
+          // brief success state before redirect
+          btnText.textContent = '✓ Redirecting…';
+          setTimeout(function () {
+            window.location.replace(ADMIN_PATH);
+          }, 400);
+        })
+        .catch(function (e) {
+          setBusy(false);
+          if (e.message === 'unauthorized') {
+            showError('Invalid username or password. Please try again.');
+          } else {
+            showError('Connection error. Please check your connection and try again.');
+          }
+          shakeCard();
+          passwordEl.value = '';
+          passwordEl.focus();
+        });
+    }
+
+    // ── Keyboard / Enter support ────────────────────────────────
+    usernameEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); passwordEl.focus(); }
+    });
+    passwordEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); doLogin(); }
+    });
+    signinBtn.addEventListener('click', doLogin);
+
+    // Clear error when user starts typing
+    usernameEl.addEventListener('input', clearError);
+    passwordEl.addEventListener('input', clearError);
+  </script>
+</body>
+</html>
