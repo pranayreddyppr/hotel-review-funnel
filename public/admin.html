@@ -277,7 +277,6 @@
   </div><!-- /admin-body -->
 </div><!-- /dashboard -->
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script>
   var PAGE = 50;
   var credentials = null;
@@ -418,11 +417,6 @@
     con.innerHTML = '';
     if (!hotelList || !hotelList.length) {
       con.innerHTML = '<div class="msg error">No hotels found. QR codes cannot be generated.<br>Check your API credentials or contact support.</div>';
-      // Try to fetch and log the actual API response for debugging
-      fetch('/api/admin/config', { headers: ah() })
-        .then(function(r) { return r.text(); })
-        .then(function(txt) { console.error('[QR] No hotels loaded. API response:', txt); })
-        .catch(function(e) { console.error('[QR] Error fetching /api/admin/config:', e); });
       return;
     }
     hotelList.forEach(function(h) {
@@ -431,8 +425,11 @@
 
       var cw = document.createElement('div');
       cw.className = 'qr-cw';
-      var canvas = document.createElement('canvas');
-      cw.appendChild(canvas);
+      var qrImg = document.createElement('img');
+      qrImg.src = h.qrDataUrl || '';
+      qrImg.width = 200; qrImg.height = 200;
+      qrImg.alt = 'QR code for ' + h.name;
+      cw.appendChild(qrImg);
       card.appendChild(cw);
 
       var info = document.createElement('div');
@@ -452,7 +449,9 @@
       var ac = document.createElement('div'); ac.className = 'qr-acts';
 
       var dlA = document.createElement('a');
-      dlA.className = 'btn'; dlA.textContent = '\u2B07 Download'; dlA.download = 'qr-' + h.slug + '.png';
+      dlA.className = 'btn'; dlA.textContent = '\u2B07 Download';
+      dlA.download = 'qr-' + h.slug + '.png';
+      dlA.href = h.qrDataUrl || '';
       ac.appendChild(dlA);
 
       var cpBtn = document.createElement('button');
@@ -469,27 +468,18 @@
 
       var prBtn = document.createElement('button');
       prBtn.className = 'btn'; prBtn.textContent = '\uD83D\uDDA8 Print';
-      prBtn.onclick = (function(hh, cv) { return function() { printQR(hh, cv); }; })(h, canvas);
+      prBtn.onclick = (function(hh) { return function() { printQR(hh); }; })(h);
       ac.appendChild(prBtn);
 
       info.appendChild(ac);
       card.appendChild(info);
       con.appendChild(card);
-
-      if (typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvas, h.guestUrl, { width: 200, margin: 1, color: { dark: '#0d1117', light: '#ffffff' } }, function(err) {
-          if (err) { console.error('[QR] QRCode.toCanvas error:', err, h); }
-          dlA.href = canvas.toDataURL('image/png');
-        });
-      } else {
-        console.error('[QR] QRCode library not loaded');
-      }
     });
   }
 
-  function printQR(hotel, canvas) {
+  function printQR(hotel) {
     var w = window.open('', '_blank');
-    var d = canvas ? canvas.toDataURL('image/png') : '';
+    var d = hotel.qrDataUrl || '';
     w.document.write('<!DOCTYPE html><html><head><title>QR \u2014 ' + esc(hotel.name) + '</title>' +
       '<style>body{font-family:sans-serif;text-align:center;padding:40px;}h1{font-size:1.2rem;margin-bottom:6px;}p{font-size:0.8rem;color:#666;margin-bottom:20px;}img{width:260px;height:260px;}@media print{button{display:none;}}</style>' +
       '</head><body><h1>' + esc(hotel.name) + '</h1><p>Scan to rate your stay</p><img src="' + d + '" /><br><br>' +

@@ -1,0 +1,227 @@
+import os
+
+feedback = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share Your Feedback</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script>
+    (function() {
+      try {
+        var s = new URLSearchParams(location.search).get('hotel');
+        if (!s) return;
+        var raw = sessionStorage.getItem('ht_' + s);
+        if (!raw) return;
+        var t = JSON.parse(raw);
+        var r = document.documentElement.style;
+        r.setProperty('--theme-gradient', t.gradient);
+        r.setProperty('--theme-accent', t.accent);
+        r.setProperty('--theme-star', t.starColor);
+        r.setProperty('--theme-star-glow', t.starGlow);
+        r.setProperty('--theme-btn-gradient', t.btnGradient);
+        r.setProperty('--theme-btn-text', t.btnText);
+        r.setProperty('--theme-divider', t.dividerColor);
+        r.setProperty('--theme-card-border', t.cardBorder);
+        r.setProperty('--theme-card-accent', t.cardAccent);
+        window.__preloadedTheme = t;
+        window.__preloadedSlug = s;
+        var st = document.createElement('style');
+        st.textContent = 'html,body{background:' + t.gradient + ' !important;}';
+        document.head.appendChild(st);
+      } catch(e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script>
+    if (window.__preloadedTheme) {
+      document.body.classList.add('themed');
+      if (window.__preloadedSlug) document.body.dataset.hotel = window.__preloadedSlug;
+    }
+  </script>
+  <div class="container">
+    <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
+    <h1 class="feedback-heading">We\u2019d love to hear from you.</h1>
+    <div class="divider"></div>
+    <p class="feedback-sub">Your experience matters to us. Please share what happened &mdash; every response is personally reviewed by our team.</p>
+    <textarea id="feedback-text" placeholder="Tell us what happened\u2026" maxlength="500" style="margin-top:24px;"></textarea>
+    <p class="char-counter" id="char-counter">0 / 500</p>
+    <p class="error-message" id="error-msg"></p>
+    <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">Submit Feedback</button>
+  </div>
+  <script>
+    var urlParams = new URLSearchParams(window.location.search);
+    var reviewToken = urlParams.get('token');
+    var hotelSlug = urlParams.get('hotel');
+    if (hotelSlug) {
+      fetch('/api/config?hotel=' + encodeURIComponent(hotelSlug))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.hotelName) document.title = data.hotelName + ' \u2014 Share Your Feedback';
+          if (data.hotelLogo) {
+            var logoEl = document.getElementById('hotel-logo');
+            logoEl.src = data.hotelLogo;
+            logoEl.alt = (data.hotelName || '') + ' logo';
+            logoEl.style.display = 'block';
+          }
+          if (data.theme) {
+            applyTheme(data.theme);
+            try { sessionStorage.setItem('ht_' + hotelSlug, JSON.stringify(data.theme)); } catch(e) {}
+          }
+        }).catch(function() {});
+    }
+    if (!reviewToken || reviewToken.trim().length === 0) {
+      document.getElementById('error-msg').textContent = 'Something went wrong. Please go back and try again.';
+      document.getElementById('submit-btn').disabled = true;
+    }
+    var textarea = document.getElementById('feedback-text');
+    var counter = document.getElementById('char-counter');
+    textarea.addEventListener('input', function() {
+      var len = textarea.value.length;
+      counter.textContent = len + ' / 500';
+      if (len >= 500) { counter.style.color = '#ff6b6b'; counter.classList.remove('warning'); }
+      else if (len > 400) { counter.style.color = ''; counter.classList.add('warning'); }
+      else { counter.style.color = 'rgba(255,255,255,0.25)'; counter.classList.remove('warning'); }
+    });
+    function submitFeedback() {
+      var feedbackText = textarea.value;
+      var errorEl = document.getElementById('error-msg');
+      var btn = document.getElementById('submit-btn');
+      errorEl.textContent = '';
+      if (!feedbackText || feedbackText.trim().length === 0) {
+        errorEl.textContent = 'Please write something before submitting.';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewToken: reviewToken, feedback: feedbackText.trim() })
+      })
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var redirectUrl = 'thankyou.html';
+          if (hotelSlug) redirectUrl += '?hotel=' + encodeURIComponent(hotelSlug);
+          window.location.href = redirectUrl;
+        } else {
+          errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+          btn.disabled = false;
+          btn.textContent = 'Submit Feedback';
+        }
+      }).catch(function() {
+        errorEl.textContent = 'Could not connect. Please check your connection and try again.';
+        btn.disabled = false;
+        btn.textContent = 'Submit Feedback';
+      });
+    }
+    function applyTheme(t) {
+      var r = document.documentElement.style;
+      r.setProperty('--theme-accent', t.accent); r.setProperty('--theme-gradient', t.gradient);
+      r.setProperty('--theme-star', t.starColor); r.setProperty('--theme-star-glow', t.starGlow);
+      r.setProperty('--theme-btn-gradient', t.btnGradient); r.setProperty('--theme-btn-text', t.btnText);
+      r.setProperty('--theme-divider', t.dividerColor); r.setProperty('--theme-card-border', t.cardBorder);
+      r.setProperty('--theme-card-accent', t.cardAccent);
+      document.body.classList.add('themed');
+      if (t.slug) document.body.dataset.hotel = t.slug;
+    }
+  </script>
+</body>
+</html>'''
+
+thankyou = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script>
+    (function() {
+      try {
+        var s = new URLSearchParams(location.search).get('hotel');
+        if (!s) return;
+        var raw = sessionStorage.getItem('ht_' + s);
+        if (!raw) return;
+        var t = JSON.parse(raw);
+        var r = document.documentElement.style;
+        r.setProperty('--theme-gradient', t.gradient);
+        r.setProperty('--theme-accent', t.accent);
+        r.setProperty('--theme-star', t.starColor);
+        r.setProperty('--theme-star-glow', t.starGlow);
+        r.setProperty('--theme-btn-gradient', t.btnGradient);
+        r.setProperty('--theme-btn-text', t.btnText);
+        r.setProperty('--theme-divider', t.dividerColor);
+        r.setProperty('--theme-card-border', t.cardBorder);
+        r.setProperty('--theme-card-accent', t.cardAccent);
+        window.__preloadedTheme = t;
+        window.__preloadedSlug = s;
+        var st = document.createElement('style');
+        st.textContent = 'html,body{background:' + t.gradient + ' !important;}';
+        document.head.appendChild(st);
+      } catch(e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script>
+    if (window.__preloadedTheme) {
+      document.body.classList.add('themed');
+      if (window.__preloadedSlug) document.body.dataset.hotel = window.__preloadedSlug;
+    }
+  </script>
+  <div class="container">
+    <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
+    <div class="thankyou-icon">&#10003;</div>
+    <h1 class="thankyou-heading">Thank You!</h1>
+    <p class="thankyou-sub" id="thankyou-sub">
+      We appreciate you taking the time to share your experience.<br>
+      Your feedback has been received and will help us improve.
+    </p>
+  </div>
+  <script>
+    var hotelSlug = new URLSearchParams(window.location.search).get('hotel');
+    if (hotelSlug) {
+      fetch('/api/config?hotel=' + encodeURIComponent(hotelSlug))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.hotelLogo) {
+            var logoEl = document.getElementById('hotel-logo');
+            logoEl.src = data.hotelLogo;
+            logoEl.alt = (data.hotelName || '') + ' logo';
+            logoEl.style.display = 'block';
+          }
+          if (data.thankYouMessage) document.getElementById('thankyou-sub').textContent = data.thankYouMessage;
+          if (data.theme) {
+            applyTheme(data.theme);
+            try { sessionStorage.setItem('ht_' + hotelSlug, JSON.stringify(data.theme)); } catch(e) {}
+          }
+        }).catch(function() {});
+    }
+    function applyTheme(t) {
+      var r = document.documentElement.style;
+      r.setProperty('--theme-accent', t.accent); r.setProperty('--theme-gradient', t.gradient);
+      r.setProperty('--theme-star', t.starColor); r.setProperty('--theme-star-glow', t.starGlow);
+      r.setProperty('--theme-btn-gradient', t.btnGradient); r.setProperty('--theme-btn-text', t.btnText);
+      r.setProperty('--theme-divider', t.dividerColor); r.setProperty('--theme-card-border', t.cardBorder);
+      r.setProperty('--theme-card-accent', t.cardAccent);
+      document.body.classList.add('themed');
+      if (t.slug) document.body.dataset.hotel = t.slug;
+    }
+  </script>
+</body>
+</html>'''
+
+os.chdir('/Users/Shared/hotel-review-funnel')
+with open('public/feedback.html', 'w', encoding='utf-8') as f:
+    f.write(feedback)
+with open('public/thankyou.html', 'w', encoding='utf-8') as f:
+    f.write(thankyou)
+print("Done. feedback:", len(feedback), "thankyou:", len(thankyou))

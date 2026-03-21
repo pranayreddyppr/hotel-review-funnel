@@ -1,5 +1,6 @@
 require("dotenv").config();
 const config = require("./config");
+const QRCode = require("qrcode");
 const {
   saveRating,
   saveFeedback,
@@ -205,16 +206,32 @@ app.get("/admin", adminLimiter, (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/admin/config — hotel list for the dashboard
 // ─────────────────────────────────────────────
-app.get("/api/admin/config", adminLimiter, basicAuth, (req, res) => {
+app.get("/api/admin/config", adminLimiter, basicAuth, async (req, res) => {
   const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const hotels = Object.entries(config.hotels).map(([slug, h]) => ({
-    slug,
-    name: h.name,
-    logo: h.logo || null,
-    thankYouMessage: h.thankYouMessage || null,
-    guestUrl: `${baseUrl}/?hotel=${slug}`,
-  }));
-  res.json({ hotels });
+  try {
+    const hotels = await Promise.all(
+      Object.entries(config.hotels).map(async ([slug, h]) => {
+        const guestUrl = `${baseUrl}/?hotel=${slug}`;
+        const qrDataUrl = await QRCode.toDataURL(guestUrl, {
+          width: 200,
+          margin: 1,
+          color: { dark: "#0d1117", light: "#ffffff" },
+        });
+        return {
+          slug,
+          name: h.name,
+          logo: h.logo || null,
+          thankYouMessage: h.thankYouMessage || null,
+          guestUrl,
+          qrDataUrl,
+        };
+      })
+    );
+    res.json({ hotels });
+  } catch (err) {
+    console.error("GET /api/admin/config error:", err);
+    res.status(500).json({ error: "Failed to generate QR codes." });
+  }
 });
 
 // ─────────────────────────────────────────────
