@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-bg">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,36 +32,43 @@
   </script>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body id="body-bg">
   <div class="container">
     <img id="hotel-logo" class="hotel-logo" src="" alt="" style="display:none" />
     <h1 class="feedback-heading">We'd love to hear from you.</h1>
     <div class="divider"></div>
     <p class="feedback-sub">Your experience matters to us. Please share what happened &mdash; every response is personally reviewed by our team.</p>
-
-    <textarea
-      id="feedback-text"
-      placeholder="Tell us what happened…"
-      maxlength="500"
-      style="margin-top:24px;"
-    ></textarea>
-
-    <p class="char-counter" id="char-counter">0 / 500</p>
-
-    <p class="error-message" id="error-msg"></p>
-
-    <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">
-      Submit Feedback
-    </button>
-  </div>
-
   <script>
-    var urlParams = new URLSearchParams(window.location.search);
-    var reviewToken = urlParams.get('token');
-    var hotelSlug = urlParams.get('hotel');
-
-    // Load and display the hotel name
-    if (hotelSlug) {
+    (function() {
+      try {
+        var s = new URLSearchParams(location.search).get('hotel');
+        var fallback = '#110A06';
+        var bg = fallback;
+        if (s) {
+          var raw = sessionStorage.getItem('ht_' + s);
+          if (raw) {
+            var t = JSON.parse(raw);
+            if (t.gradient) bg = t.gradient;
+            var r = document.documentElement.style;
+            r.setProperty('--theme-gradient', t.gradient);
+            r.setProperty('--theme-accent', t.accent);
+            r.setProperty('--theme-star', t.starColor);
+            r.setProperty('--theme-star-glow', t.starGlow);
+            r.setProperty('--theme-btn-gradient', t.btnGradient);
+            r.setProperty('--theme-btn-text', t.btnText);
+            r.setProperty('--theme-divider', t.dividerColor);
+            r.setProperty('--theme-card-border', t.cardBorder);
+            r.setProperty('--theme-card-accent', t.cardAccent);
+          }
+        }
+        document.getElementById('html-bg').setAttribute('style', 'background:' + bg + ' !important;');
+        document.getElementById('body-bg').setAttribute('style', 'background:' + bg + ' !important;');
+      } catch(e) {
+        document.getElementById('html-bg').setAttribute('style', 'background:#110A06 !important;');
+        document.getElementById('body-bg').setAttribute('style', 'background:#110A06 !important;');
+      }
+    })();
+  </script>
       fetch('/api/config?hotel=' + encodeURIComponent(hotelSlug))
         .then(function(r) { return r.json(); })
         .then(function(data) {
