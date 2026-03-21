@@ -1,6 +1,13 @@
 require("dotenv").config();
 const config = require("./config");
-const { saveRating, saveFeedback, getReviews, deleteReview, clearReviews } = require("./database");
+const {
+  saveRating,
+  saveFeedback,
+  getReviews,
+  deleteReview,
+  clearReviews,
+  getStats,
+} = require("./database");
 const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
@@ -85,6 +92,7 @@ app.get("/api/config", (req, res) => {
     hotelName: hotel.name,
     hotelLogo: hotel.logo || null,
     theme: hotel.theme || null,
+    thankYouMessage: hotel.thankYouMessage || null,
   });
 });
 
@@ -184,6 +192,8 @@ app.get("/api/admin/config", adminLimiter, basicAuth, (req, res) => {
   const hotels = Object.entries(config.hotels).map(([slug, h]) => ({
     slug,
     name: h.name,
+    logo: h.logo || null,
+    thankYouMessage: h.thankYouMessage || null,
     guestUrl: `${baseUrl}/?hotel=${slug}`,
   }));
   res.json({ hotels });
@@ -211,20 +221,25 @@ app.get("/api/admin/reviews", adminLimiter, basicAuth, async (req, res) => {
 // ─────────────────────────────────────────────
 // DELETE /api/admin/reviews/:id — delete one review
 // ─────────────────────────────────────────────
-app.delete("/api/admin/reviews/:id", adminLimiter, basicAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (!Number.isInteger(id) || id < 1) {
-    return res.status(400).json({ error: "Invalid review ID." });
-  }
-  try {
-    const deleted = await deleteReview(id);
-    if (!deleted) return res.status(404).json({ error: "Review not found." });
-    res.json({ success: true });
-  } catch (error) {
-    console.error("DELETE /api/admin/reviews/:id error:", error);
-    return res.status(500).json({ error: "Something went wrong." });
-  }
-});
+app.delete(
+  "/api/admin/reviews/:id",
+  adminLimiter,
+  basicAuth,
+  async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: "Invalid review ID." });
+    }
+    try {
+      const deleted = await deleteReview(id);
+      if (!deleted) return res.status(404).json({ error: "Review not found." });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("DELETE /api/admin/reviews/:id error:", error);
+      return res.status(500).json({ error: "Something went wrong." });
+    }
+  },
+);
 
 // ─────────────────────────────────────────────
 // DELETE /api/admin/reviews?hotel=slug — clear all for a hotel
@@ -256,17 +271,39 @@ app.get("/api/admin/export", adminLimiter, basicAuth, async (req, res) => {
       const date = r.created_at || "";
       const hotel = (r.hotel_slug || "").replace(/"/g, '""');
       const rating = r.rating;
-      const feedback = (r.feedback || "").replace(/"/g, '""').replace(/\n/g, " ");
+      const feedback = (r.feedback || "")
+        .replace(/"/g, '""')
+        .replace(/\n/g, " ");
       return `"${date}","${hotel}",${rating},"${feedback}"`;
     });
     const csv = header + csvRows.join("\n");
-    const filename = hotelSlug ? `reviews-${hotelSlug}.csv` : "reviews-all.csv";
+    const today = new Date().toISOString().slice(0, 10);
+    const filename = hotelSlug
+      ? `${hotelSlug}-reviews-${today}.csv`
+      : `reviews-all-${today}.csv`;
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(csv);
   } catch (error) {
     console.error("GET /api/admin/export error:", error);
     return res.status(500).json({ error: "Export failed." });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/stats?hotel=slug — aggregate stats for analytics
+// ─────────────────────────────────────────────
+app.get("/api/admin/stats", adminLimiter, basicAuth, async (req, res) => {
+  const hotelSlug = req.query.hotel || null;
+  if (hotelSlug && !getHotel(hotelSlug)) {
+    return res.status(404).json({ error: "Hotel not found." });
+  }
+  try {
+    const stats = await getStats(hotelSlug);
+    res.json(stats);
+  } catch (error) {
+    console.error("GET /api/admin/stats error:", error);
+    return res.status(500).json({ error: "Something went wrong." });
   }
 });
 

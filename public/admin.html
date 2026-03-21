@@ -9,6 +9,783 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+      --border: #30363d; --border2: #21262d;
+      --text: #e6edf3; --text2: #b0bec5; --mute: #8b949e;
+      --blue: #58a6ff; --green: #3fb950; --red: #f85149; --gold: #d29922;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+    /* ── Login ── */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: radial-gradient(ellipse at 30% 35%, rgba(31,111,235,0.14) 0%, transparent 55%),
+                  radial-gradient(ellipse at 75% 70%, rgba(136,19,55,0.09) 0%, transparent 55%), #0d1117;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: rgba(22,27,34,0.97); border: 1px solid rgba(48,54,61,0.9);
+      border-radius: 20px; padding: 44px 40px 36px; width: 100%; max-width: 360px;
+      text-align: center; box-shadow: 0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(88,166,255,0.05);
+    }
+    .login-icon {
+      width: 62px; height: 62px; border-radius: 16px;
+      background: linear-gradient(135deg, #1c2b3a 0%, #0d2137 100%);
+      border: 1px solid rgba(88,166,255,0.18); display: flex; align-items: center;
+      justify-content: center; font-size: 1.8rem; margin: 0 auto 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    }
+    .login-card h1 { font-size: 1.2rem; font-weight: 700; color: #e6edf3; margin-bottom: 5px; }
+    .login-card p  { font-size: 0.82rem; color: var(--mute); margin-bottom: 28px; }
+    .login-field   { position: relative; margin-bottom: 11px; }
+    .login-field input {
+      display: block; width: 100%; padding: 11px 16px 11px 40px;
+      background: #0d1117; border: 1px solid var(--border); border-radius: 10px;
+      color: #e6edf3; font-size: 0.9rem; font-family: inherit; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .login-field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88,166,255,0.1); }
+    .login-field input::placeholder { color: #484f58; }
+    .login-field .fi { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; opacity: 0.45; pointer-events: none; }
+    .login-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px; margin-top: 8px;
+      background: linear-gradient(135deg, #1a4b8c 0%, #2563b0 100%);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 18px rgba(37,99,176,0.38);
+    }
+    .login-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .login-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
+    .spinner.on { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .login-error { color: var(--red); font-size: 0.8rem; margin-top: 11px; min-height: 18px; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .login-card.shake { animation: shake 0.38s ease; }
+
+    /* ── Top bar ── */
+    .topbar { background: var(--bg2); border-bottom: 1px solid var(--border2); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 90; }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand .bi { font-size: 1.25rem; }
+    .topbar-brand h1 { font-size: 0.95rem; font-weight: 700; color: #e6edf3; }
+    .topbar-actions { display: flex; gap: 7px; align-items: center; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px;
+      border-radius: 8px; font-size: 0.8rem; font-weight: 500; font-family: inherit;
+      cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text2);
+      transition: all 0.14s; line-height: 1; white-space: nowrap;
+    }
+    .btn:hover { background: var(--border); border-color: var(--mute); color: var(--text); }
+    .btn-red { color: var(--red); border-color: rgba(248,81,73,0.28); }
+    .btn-red:hover { background: rgba(248,81,73,0.1); border-color: var(--red); }
+    .btn-green { color: var(--green); border-color: rgba(63,185,80,0.28); }
+    .btn-green:hover { background: rgba(63,185,80,0.1); border-color: var(--green); }
+    .btn-blue { color: var(--blue); border-color: rgba(88,166,255,0.28); }
+    .btn-blue:hover { background: rgba(88,166,255,0.1); border-color: var(--blue); }
+    .btn-solid-red { background: var(--red); color: #fff; border-color: transparent; font-weight: 600; }
+    .btn-solid-red:hover { background: #ff6359; border-color: transparent; color: #fff; }
+
+    /* ── Hotel tabs ── */
+    .hotel-tabs { background: var(--bg2); border-bottom: 1px solid var(--border2); padding: 0 24px; display: flex; gap: 0; overflow-x: auto; }
+    .hotel-tabs::-webkit-scrollbar { height: 2px; }
+    .hotel-tabs::-webkit-scrollbar-thumb { background: var(--border); }
+    .hotel-tab {
+      display: flex; align-items: center; gap: 8px; padding: 11px 16px; cursor: pointer;
+      white-space: nowrap; border-bottom: 2px solid transparent; color: var(--mute);
+      font-size: 0.85rem; font-weight: 500; transition: color 0.14s, border-color 0.14s;
+      user-select: none; -webkit-user-select: none; flex-shrink: 0;
+    }
+    .hotel-tab:hover { color: var(--text2); }
+    .hotel-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .hotel-tab img { width: 24px; height: 17px; object-fit: contain; border-radius: 3px; background: #fff; padding: 1px 3px; }
+
+    /* ── Admin body ── */
+    .admin-body { max-width: 1240px; margin: 0 auto; padding: 24px 24px 64px; }
+
+    /* ── Stats row ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)); gap: 12px; margin-bottom: 26px; }
+    .sc { background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px; padding: 20px 16px; position: relative; overflow: hidden; }
+    .sc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .sc.s1::before{background:linear-gradient(90deg,var(--blue),transparent);}
+    .sc.s2::before{background:linear-gradient(90deg,var(--gold),transparent);}
+    .sc.s3::before{background:linear-gradient(90deg,var(--green),transparent);}
+    .sc.s4::before{background:linear-gradient(90deg,var(--red),transparent);}
+    .sc.s5::before{background:linear-gradient(90deg,#a371f7,transparent);}
+    .sc-icon { font-size: 1.35rem; margin-bottom: 10px; opacity: 0.75; }
+    .sc-val { font-size: 1.9rem; font-weight: 700; color: #e6edf3; line-height: 1; margin-bottom: 4px; }
+    .sc-val.gold{color:var(--gold);} .sc-val.green{color:var(--green);} .sc-val.red{color:var(--red);}
+    .sc-lbl { font-size: 0.7rem; color: var(--mute); text-transform: uppercase; letter-spacing: 0.07em; }
+
+    /* ── Section header ── */
+    .sh { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 4px; }
+    .sh h2 { font-size: 0.88rem; font-weight: 600; color: var(--text2); white-space: nowrap; }
+    .sh hr { flex: 1; border: none; height: 1px; background: var(--border2); }
+
+    /* ── Analytics ── */
+    .ag { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 26px; }
+    @media(max-width:680px){.ag{grid-template-columns:1fr;}}
+    .an { background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px; padding: 20px; }
+    .an h3 { font-size: 0.76rem; font-weight: 600; color: var(--mute); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+
+    /* Rating dist */
+    .drow { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+    .dlbl { width: 26px; font-size: 0.8rem; color: var(--mute); text-align: right; flex-shrink: 0; }
+    .dbw { flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 8px; overflow: hidden; }
+    .dbar { height: 100%; border-radius: 4px; transition: width 0.55s ease; min-width: 0; }
+    .dbar.r5{background:var(--green);} .dbar.r4{background:#7dc375;} .dbar.r3{background:var(--gold);} .dbar.r2{background:#e08030;} .dbar.r1{background:var(--red);}
+    .dcnt { width: 32px; font-size: 0.76rem; color: var(--mute); flex-shrink: 0; text-align: right; }
+
+    /* Trend chart */
+    .trend { display: flex; align-items: flex-end; gap: 2px; height: 70px; }
+    .twrap { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; position: relative; cursor: default; }
+    .tbar { width: 100%; border-radius: 2px 2px 0 0; background: rgba(88,166,255,0.3); min-height: 2px; transition: background 0.14s; }
+    .twrap:hover .tbar { background: var(--blue); }
+    .ttp { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); background: #1c2128; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 0.7rem; white-space: nowrap; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.14s; z-index: 20; }
+    .twrap:hover .ttp { opacity: 1; }
+    .tfoot { display: flex; justify-content: space-between; margin-top: 5px; }
+    .tfoot span { font-size: 0.64rem; color: var(--mute); }
+
+    /* ── QR section ── */
+    .qr-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+    .qr-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px; padding: 22px; display: flex; gap: 18px; align-items: flex-start; flex: 1; min-width: 270px; }
+    .qr-cw { background: #fff; border-radius: 10px; padding: 7px; flex-shrink: 0; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .qr-info { flex: 1; min-width: 0; }
+    .qr-logo { height: 26px; max-width: 100px; object-fit: contain; background: #fff; border-radius: 4px; padding: 2px 5px; margin-bottom: 10px; display: block; }
+    .qr-info h3 { font-size: 0.88rem; font-weight: 600; color: #e6edf3; margin-bottom: 6px; }
+    .qr-ty { font-size: 0.75rem; color: var(--mute); font-style: italic; line-height: 1.45; margin-bottom: 10px; }
+    .qr-url { font-size: 0.7rem; color: var(--mute); word-break: break-all; margin-bottom: 12px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 6px 8px; border: 1px solid var(--border2); line-height: 1.5; }
+    .qr-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── Controls ── */
+    .ctrls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .ctrls select, .ctrls input[type="text"], .ctrls input[type="date"] {
+      padding: 7px 11px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 0.82rem; font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    .ctrls select:focus, .ctrls input:focus { border-color: var(--blue); }
+    .ctrls input[type="date"] { color-scheme: dark; }
+    .ctrls select { cursor: pointer; }
+    .flbl { font-size: 0.74rem; color: var(--mute); }
+
+    /* ── Bulk bar ── */
+    .bulk-bar { display: none; align-items: center; gap: 10px; padding: 9px 14px; background: rgba(88,166,255,0.07); border: 1px solid rgba(88,166,255,0.18); border-radius: 10px; margin-bottom: 11px; }
+    .bulk-bar.on { display: flex; }
+    .bulk-cnt { font-size: 0.85rem; color: var(--blue); font-weight: 600; }
+
+    /* ── Table ── */
+    .tw { overflow-x: auto; border: 1px solid var(--border2); border-radius: 14px; background: #0a0d13; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 10px 15px; text-align: left; font-size: 0.7rem; font-weight: 600; color: var(--mute); text-transform: uppercase; letter-spacing: 0.05em; background: var(--bg2); border-bottom: 1px solid var(--border2); }
+    th.thc { width: 38px; padding-left: 12px; }
+    th.tha { width: 52px; }
+    td { padding: 10px 15px; font-size: 0.85rem; color: var(--text2); border-bottom: 1px solid rgba(33,38,45,0.75); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(22,27,34,0.55); }
+    td.tdc { padding-left: 12px; width: 38px; }
+    td input[type="checkbox"] { cursor: pointer; accent-color: var(--blue); }
+    .dc { font-size: 0.78rem; color: var(--mute); white-space: nowrap; }
+    .badge-h { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; background: rgba(88,166,255,0.1); color: var(--blue); border: 1px solid rgba(88,166,255,0.18); }
+    .sic { white-space: nowrap; font-size: 0.95rem; }
+    .sic.g{color:var(--green);} .sic.y{color:var(--gold);} .sic.r{color:var(--red);}
+    .fbc { max-width: 340px; line-height: 1.55; }
+    .fbs { display: block; } .fbf { display: none; }
+    .fbt { color: var(--blue); font-size: 0.76rem; cursor: pointer; margin-top: 3px; background: none; border: none; padding: 0; font-family: inherit; }
+    .fbt:hover { text-decoration: underline; }
+    .nofb { color: #484f58; font-style: italic; font-size: 0.8rem; }
+    .del-btn { background: none; border: 1px solid transparent; color: rgba(248,81,73,0.38); cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 7px; font-family: inherit; transition: all 0.14s; }
+    .del-btn:hover { background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.45); color: var(--red); }
+
+    /* ── Pagination ── */
+    .pag { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 18px; flex-wrap: wrap; }
+    .pag button { padding: 6px 11px; border: 1px solid var(--border); background: var(--bg2); border-radius: 7px; cursor: pointer; font-size: 0.8rem; color: var(--text2); font-family: inherit; transition: all 0.12s; min-width: 32px; }
+    .pag button:hover { background: var(--bg3); border-color: var(--mute); }
+    .pag button.active { background: var(--blue); color: #0d1117; border-color: var(--blue); font-weight: 600; cursor: default; }
+    .pag button:disabled { opacity: 0.32; cursor: not-allowed; }
+
+    /* ── Misc ── */
+    .msg { text-align: center; color: var(--mute); padding: 44px; font-size: 0.9rem; }
+    .msg.err { color: var(--red); }
+
+    /* ── Confirm dialog ── */
+    .cov { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.68); display: none; align-items: center; justify-content: center; }
+    .cov.on { display: flex; }
+    .cbox { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 24px 48px rgba(0,0,0,0.6); }
+    .cbox-ic { font-size: 2rem; margin-bottom: 10px; }
+    .cbox h3 { font-size: 1rem; color: #e6edf3; margin-bottom: 7px; }
+    .cbox p { font-size: 0.84rem; color: var(--mute); margin-bottom: 22px; line-height: 1.55; }
+    .cbox-acts { display: flex; gap: 10px; justify-content: center; }
+    .cc { padding: 9px 20px; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 8px; cursor: pointer; font-size: 0.84rem; font-family: inherit; }
+    .cc:hover { background: var(--border); }
+    .cd { padding: 9px 22px; background: var(--red); border: none; color: #fff; border-radius: 8px; cursor: pointer; font-size: 0.84rem; font-weight: 600; font-family: inherit; }
+    .cd:hover { background: #ff6359; }
+
+    @media(max-width:640px){
+      .topbar { padding: 12px 14px; }
+      .admin-body { padding: 14px 12px 40px; }
+      .ctrls { flex-direction: column; align-items: stretch; }
+      .ctrls select, .ctrls input { width: 100%; }
+      .qr-card { flex-direction: column; }
+      .hotel-tab { padding: 10px 12px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ──────────────────────────────────────────────────── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card" id="login-card">
+    <div class="login-icon">🏨</div>
+    <h1>Admin Dashboard</h1>
+    <p>Sign in to manage hotel reviews</p>
+    <div class="login-field">
+      <span class="fi">👤</span>
+      <input type="text" id="lu" placeholder="Username" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <span class="fi">🔒</span>
+      <input type="password" id="lp" placeholder="Password" autocomplete="current-password" />
+    </div>
+    <button class="login-btn" id="lbtn" onclick="doLogin()">
+      <span id="lbtxt">Sign In</span>
+      <div class="spinner" id="lspin"></div>
+    </button>
+    <div class="login-error" id="lerr"></div>
+  </div>
+</div>
+
+<!-- ── Confirm dialog ─────────────────────────────────────────── -->
+<div class="cov" id="cov">
+  <div class="cbox">
+    <div class="cbox-ic" id="cic">⚠️</div>
+    <h3 id="ctit">Confirm</h3>
+    <p id="cmsg">This cannot be undone.</p>
+    <div class="cbox-acts">
+      <button class="cc" onclick="closeConfirm()">Cancel</button>
+      <button class="cd" id="cok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Dashboard ──────────────────────────────────────────────── -->
+<div id="dashboard" style="display:none;">
+
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="bi">🏨</span>
+      <h1>Hotel Reviews Admin</h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-green" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-red" onclick="confirmClearAll()">🗑 Clear All</button>
+      <button class="btn" onclick="logout()">↩ Log Out</button>
+    </div>
+  </div>
+
+  <div class="hotel-tabs" id="hotel-tabs">
+    <div class="hotel-tab active" data-hotel="" onclick="switchTab(this)">All Hotels</div>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="sc s1"><div class="sc-icon">📋</div><div class="sc-val" id="sv-total">—</div><div class="sc-lbl">Total Reviews</div></div>
+      <div class="sc s2"><div class="sc-icon">⭐</div><div class="sc-val gold" id="sv-avg">—</div><div class="sc-lbl">Avg Rating</div></div>
+      <div class="sc s3"><div class="sc-icon">👍</div><div class="sc-val green" id="sv-high">—</div><div class="sc-lbl">4–5 Stars</div></div>
+      <div class="sc s4"><div class="sc-icon">👎</div><div class="sc-val red" id="sv-low">—</div><div class="sc-lbl">1–2 Stars</div></div>
+      <div class="sc s5"><div class="sc-icon">💬</div><div class="sc-val" id="sv-fb">—</div><div class="sc-lbl">Feedback Rate</div></div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="sh"><h2>Analytics</h2><hr /></div>
+    <div class="ag">
+      <div class="an"><h3>Rating Distribution</h3><div id="dist-wrap"><div class="msg" style="padding:12px;font-size:0.8rem;">Loading…</div></div></div>
+      <div class="an"><h3>Reviews — Last 30 Days</h3><div id="trend-wrap"><div class="msg" style="padding:12px;font-size:0.8rem;">Loading…</div></div></div>
+    </div>
+
+    <!-- QR Codes -->
+    <div class="sh"><h2>Guest Links &amp; QR Codes</h2><hr /></div>
+    <div class="qr-grid" id="qr-section"></div>
+
+    <!-- Controls -->
+    <div class="sh"><h2>Reviews</h2><hr /></div>
+    <div class="ctrls">
+      <select id="rf" onchange="onFilter()">
+        <option value="">All Ratings</option>
+        <option value="5">★★★★★ 5 Stars</option>
+        <option value="4">★★★★☆ 4 Stars</option>
+        <option value="3">★★★☆☆ 3 Stars</option>
+        <option value="2">★★☆☆☆ 2 Stars</option>
+        <option value="1">★☆☆☆☆ 1 Star</option>
+      </select>
+      <span class="flbl">From</span>
+      <input type="date" id="df" onchange="onFilter()" />
+      <span class="flbl">To</span>
+      <input type="date" id="dt" onchange="onFilter()" />
+      <input type="text" id="si" placeholder="Search feedback…" style="min-width:170px;" onkeydown="if(event.key==='Enter')onFilter()" />
+      <button class="btn btn-blue" onclick="onFilter()">Search</button>
+      <button class="btn" onclick="clearFilters()">Clear</button>
+    </div>
+
+    <!-- Bulk bar -->
+    <div class="bulk-bar" id="bulk-bar">
+      <span class="bulk-cnt" id="bulk-cnt">0 selected</span>
+      <button class="btn btn-solid-red" onclick="bulkDelete()">Delete Selected</button>
+      <button class="btn" onclick="clearSelection()">Deselect All</button>
+    </div>
+
+    <!-- Table -->
+    <div class="tw" id="table-wrap"><div class="msg">Loading…</div></div>
+
+    <!-- Pagination -->
+    <div class="pag" id="pag"></div>
+
+  </div><!-- /admin-body -->
+</div><!-- /dashboard -->
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script>
+  var PAGE = 50;
+  var credentials = null;
+  var hotelList = [];
+  var confirmCb = null;
+  var selHotel = '';
+  var selIds = {};
+  var curPage = 1;
+  var allRevs = [];
+
+  // ── Login ──────────────────────────────────────────────────────
+  function doLogin() {
+    var user = document.getElementById('lu').value.trim();
+    var pass = document.getElementById('lp').value;
+    var errEl = document.getElementById('lerr');
+    if (!user || !pass) { errEl.textContent = 'Please enter username and password.'; return; }
+    var enc = btoa(unescape(encodeURIComponent(user + ':' + pass)));
+    errEl.textContent = '';
+    setBusy(true);
+    fetch('/api/admin/config', { headers: { 'Authorization': 'Basic ' + enc } })
+      .then(function(r) { if (r.status === 401) throw new Error('bad'); if (!r.ok) throw new Error('err'); return r.json(); })
+      .then(function(data) {
+        credentials = enc;
+        sessionStorage.setItem('adminCreds', enc);
+        setBusy(false);
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        initDash(data);
+      })
+      .catch(function(e) {
+        setBusy(false);
+        errEl.textContent = e.message === 'bad' ? 'Invalid username or password.' : 'Connection failed. Please try again.';
+        var card = document.getElementById('login-card');
+        card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+      });
+  }
+
+  function setBusy(b) {
+    var btn = document.getElementById('lbtn');
+    btn.disabled = b;
+    document.getElementById('lbtxt').textContent = b ? 'Signing in\u2026' : 'Sign In';
+    document.getElementById('lspin').className = b ? 'spinner on' : 'spinner';
+  }
+
+  document.getElementById('lp').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('lu').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('lp').focus(); });
+
+  (function() {
+    var sto = sessionStorage.getItem('adminCreds');
+    if (!sto) return;
+    fetch('/api/admin/config', { headers: { 'Authorization': 'Basic ' + sto } })
+      .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function(data) {
+        credentials = sto;
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        initDash(data);
+      })
+      .catch(function() { sessionStorage.removeItem('adminCreds'); });
+  })();
+
+  function ah() { return { 'Authorization': 'Basic ' + credentials, 'Content-Type': 'application/json' }; }
+  function logout() { sessionStorage.removeItem('adminCreds'); window.location.reload(); }
+
+  // ── Init ───────────────────────────────────────────────────────
+  function initDash(cfg) {
+    hotelList = cfg.hotels;
+    var tabs = document.getElementById('hotel-tabs');
+    hotelList.forEach(function(h) {
+      var t = document.createElement('div');
+      t.className = 'hotel-tab';
+      t.setAttribute('data-hotel', h.slug);
+      t.onclick = function() { switchTab(t); };
+      if (h.logo) {
+        var img = document.createElement('img');
+        img.src = encodeURI('/' + h.logo);
+        img.alt = h.name;
+        t.appendChild(img);
+      }
+      var sp = document.createElement('span');
+      sp.textContent = h.name;
+      t.appendChild(sp);
+      tabs.appendChild(t);
+    });
+    renderQR();
+    loadStats();
+    loadReviews(1);
+  }
+
+  // ── Tab switch ─────────────────────────────────────────────────
+  function switchTab(el) {
+    document.querySelectorAll('.hotel-tab').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+    selHotel = el.getAttribute('data-hotel') || '';
+    clearSelection();
+    loadStats();
+    loadReviews(1);
+  }
+
+  // ── Confirm dialog ─────────────────────────────────────────────
+  function showConfirm(title, msg, label, icon, cb) {
+    document.getElementById('cic').textContent = icon || '\u26A0\uFE0F';
+    document.getElementById('ctit').textContent = title;
+    document.getElementById('cmsg').textContent = msg;
+    document.getElementById('cok').textContent = label;
+    confirmCb = cb;
+    document.getElementById('cov').classList.add('on');
+  }
+  function closeConfirm() { document.getElementById('cov').classList.remove('on'); confirmCb = null; }
+  document.getElementById('cok').addEventListener('click', function() { if (confirmCb) confirmCb(); closeConfirm(); });
+
+  // ── Delete one ─────────────────────────────────────────────────
+  function deleteOne(id) {
+    showConfirm('Delete Review', 'Permanently delete this review? This cannot be undone.', 'Delete', '\uD83D\uDDD1\uFE0F', function() {
+      fetch('/api/admin/reviews/' + id, { method: 'DELETE', headers: ah() })
+        .then(function(r) { return r.json(); })
+        .then(function() { delete selIds[id]; updateBulk(); loadReviews(curPage); loadStats(); })
+        .catch(function() { alert('Delete failed.'); });
+    });
+  }
+
+  // ── Bulk delete ────────────────────────────────────────────────
+  function bulkDelete() {
+    var ids = Object.keys(selIds).filter(function(k) { return selIds[k]; });
+    if (!ids.length) return;
+    showConfirm('Delete ' + ids.length + ' Review' + (ids.length > 1 ? 's' : ''), 'Permanently delete the selected reviews? This cannot be undone.', 'Delete All', '\uD83D\uDDD1\uFE0F', function() {
+      var done = 0;
+      ids.forEach(function(id) {
+        fetch('/api/admin/reviews/' + id, { method: 'DELETE', headers: ah() })
+          .then(function() { done++; if (done === ids.length) { clearSelection(); loadReviews(curPage); loadStats(); } })
+          .catch(function() {});
+      });
+    });
+  }
+
+  // ── Clear all ──────────────────────────────────────────────────
+  function confirmClearAll() {
+    if (!selHotel) { alert('Please select a specific hotel tab first.'); return; }
+    var name = '';
+    hotelList.forEach(function(h) { if (h.slug === selHotel) name = h.name; });
+    showConfirm('Clear All Reviews', 'Delete ALL reviews for ' + name + '? This cannot be undone.', 'Clear All', '\u26A0\uFE0F', function() {
+      fetch('/api/admin/reviews?hotel=' + encodeURIComponent(selHotel), { method: 'DELETE', headers: ah() })
+        .then(function(r) { return r.json(); })
+        .then(function() { clearSelection(); loadReviews(1); loadStats(); })
+        .catch(function() { alert('Clear failed.'); });
+    });
+  }
+
+  // ── Export CSV ─────────────────────────────────────────────────
+  function exportCSV() {
+    var url = '/api/admin/export' + (selHotel ? '?hotel=' + encodeURIComponent(selHotel) : '');
+    fetch(url, { headers: ah() })
+      .then(function(r) { return r.blob(); })
+      .then(function(blob) {
+        var today = new Date().toISOString().slice(0, 10);
+        var fn = selHotel ? selHotel + '-reviews-' + today + '.csv' : 'reviews-all-' + today + '.csv';
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = fn;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      })
+      .catch(function() { alert('Export failed.'); });
+  }
+
+  // ── QR Codes ───────────────────────────────────────────────────
+  function renderQR() {
+    var con = document.getElementById('qr-section');
+    con.innerHTML = '';
+    hotelList.forEach(function(h) {
+      var card = document.createElement('div');
+      card.className = 'qr-card';
+
+      var cw = document.createElement('div');
+      cw.className = 'qr-cw';
+      var canvas = document.createElement('canvas');
+      cw.appendChild(canvas);
+      card.appendChild(cw);
+
+      var info = document.createElement('div');
+      info.className = 'qr-info';
+
+      if (h.logo) {
+        var li = document.createElement('img');
+        li.className = 'qr-logo'; li.src = encodeURI('/' + h.logo); li.alt = h.name;
+        info.appendChild(li);
+      }
+      var ti = document.createElement('h3'); ti.textContent = h.name; info.appendChild(ti);
+      if (h.thankYouMessage) {
+        var ty = document.createElement('p'); ty.className = 'qr-ty'; ty.textContent = h.thankYouMessage; info.appendChild(ty);
+      }
+      var ud = document.createElement('div'); ud.className = 'qr-url'; ud.textContent = h.guestUrl; info.appendChild(ud);
+
+      var ac = document.createElement('div'); ac.className = 'qr-acts';
+
+      var dlA = document.createElement('a');
+      dlA.className = 'btn'; dlA.textContent = '\u2B07 Download'; dlA.download = 'qr-' + h.slug + '.png';
+      ac.appendChild(dlA);
+
+      var cpBtn = document.createElement('button');
+      cpBtn.className = 'btn btn-blue'; cpBtn.textContent = '\uD83D\uDCCB Copy Link';
+      cpBtn.onclick = (function(url, btn) {
+        return function() {
+          navigator.clipboard.writeText(url).then(function() {
+            btn.textContent = '\u2713 Copied!';
+            setTimeout(function() { btn.textContent = '\uD83D\uDCCB Copy Link'; }, 2000);
+          }).catch(function() { alert('URL: ' + url); });
+        };
+      })(h.guestUrl, cpBtn);
+      ac.appendChild(cpBtn);
+
+      var prBtn = document.createElement('button');
+      prBtn.className = 'btn'; prBtn.textContent = '\uD83D\uDDA8 Print';
+      prBtn.onclick = (function(hh, cv) { return function() { printQR(hh, cv); }; })(h, canvas);
+      ac.appendChild(prBtn);
+
+      info.appendChild(ac);
+      card.appendChild(info);
+      con.appendChild(card);
+
+      if (typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvas, h.guestUrl, { width: 200, margin: 1, color: { dark: '#0d1117', light: '#ffffff' } }, function() {
+          dlA.href = canvas.toDataURL('image/png');
+        });
+      }
+    });
+  }
+
+  function printQR(hotel, canvas) {
+    var w = window.open('', '_blank');
+    var d = canvas ? canvas.toDataURL('image/png') : '';
+    w.document.write('<!DOCTYPE html><html><head><title>QR \u2014 ' + esc(hotel.name) + '</title>' +
+      '<style>body{font-family:sans-serif;text-align:center;padding:40px;}h1{font-size:1.2rem;margin-bottom:6px;}p{font-size:0.8rem;color:#666;margin-bottom:20px;}img{width:260px;height:260px;}@media print{button{display:none;}}</style>' +
+      '</head><body><h1>' + esc(hotel.name) + '</h1><p>Scan to rate your stay</p><img src="' + d + '" /><br><br>' +
+      '<p style="font-size:0.68rem;word-break:break-all;">' + esc(hotel.guestUrl) + '</p><br>' +
+      '<button onclick="window.print()">Print</button></body></html>');
+    w.document.close();
+  }
+
+  // ── Load stats ─────────────────────────────────────────────────
+  function loadStats() {
+    var url = '/api/admin/stats' + (selHotel ? '?hotel=' + encodeURIComponent(selHotel) : '');
+    fetch(url, { headers: ah() })
+      .then(function(r) { if (r.status === 401) { sessionStorage.removeItem('adminCreds'); window.location.reload(); return null; } return r.json(); })
+      .then(function(d) {
+        if (!d) return;
+        var dist = d.ratingDistribution || {};
+        var total = d.total || 0;
+        var high = (dist[4] || 0) + (dist[5] || 0);
+        var low  = (dist[1] || 0) + (dist[2] || 0);
+        var fb   = total > 0 ? Math.round((d.feedbackCount || 0) / total * 100) + '%' : '\u2014';
+        document.getElementById('sv-total').textContent = total;
+        document.getElementById('sv-avg').textContent   = total > 0 ? (d.avgRating || 0).toFixed(1) + ' \u2605' : '\u2014';
+        document.getElementById('sv-high').textContent  = total > 0 ? high : '\u2014';
+        document.getElementById('sv-low').textContent   = total > 0 ? low  : '\u2014';
+        document.getElementById('sv-fb').textContent    = fb;
+        renderDist(dist, total);
+        renderTrend(d.last30Days);
+      })
+      .catch(function() {});
+  }
+
+  function renderDist(dist, total) {
+    dist = dist || {}; total = total || 0;
+    var html = '';
+    for (var i = 5; i >= 1; i--) {
+      var cnt = dist[i] || 0;
+      var pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      html += '<div class="drow"><span class="dlbl">' + i + '\u2605</span>' +
+              '<div class="dbw"><div class="dbar r' + i + '" style="width:' + pct + '%"></div></div>' +
+              '<span class="dcnt">' + cnt + '</span></div>';
+    }
+    document.getElementById('dist-wrap').innerHTML = html || '<div class="msg" style="padding:10px;font-size:0.8rem;">No data yet.</div>';
+  }
+
+  function renderTrend(days) {
+    if (!days || !days.length) { document.getElementById('trend-wrap').innerHTML = '<div class="msg" style="padding:10px;font-size:0.8rem;">No data yet.</div>'; return; }
+    var mx = 1;
+    days.forEach(function(d) { if (d.count > mx) mx = d.count; });
+    var bars = '';
+    days.forEach(function(d) {
+      var hp = Math.round(d.count / mx * 58);
+      bars += '<div class="twrap"><div class="ttp">' + d.date + ': ' + d.count + '</div><div class="tbar" style="height:' + Math.max(hp, 2) + 'px;"></div></div>';
+    });
+    var fl = days[0] ? days[0].date.slice(5) : '';
+    var ll = days[days.length - 1] ? days[days.length - 1].date.slice(5) : '';
+    document.getElementById('trend-wrap').innerHTML = '<div class="trend">' + bars + '</div><div class="tfoot"><span>' + fl + '</span><span>' + ll + '</span></div>';
+  }
+
+  // ── Filters ────────────────────────────────────────────────────
+  function onFilter() { loadReviews(1); }
+  function clearFilters() {
+    document.getElementById('rf').value = '';
+    document.getElementById('df').value = '';
+    document.getElementById('dt').value = '';
+    document.getElementById('si').value = '';
+    loadReviews(1);
+  }
+
+  // ── Selection ──────────────────────────────────────────────────
+  function toggleSel(id, chk) { if (chk) { selIds[id] = true; } else { delete selIds[id]; } updateBulk(); }
+  function toggleAll(chk) {
+    allRevs.forEach(function(r) { if (chk) { selIds[r.id] = true; } else { delete selIds[r.id]; } });
+    document.querySelectorAll('.rc').forEach(function(cb) { cb.checked = chk; });
+    updateBulk();
+  }
+  function clearSelection() {
+    selIds = {};
+    document.querySelectorAll('.rc').forEach(function(cb) { cb.checked = false; });
+    var sa = document.getElementById('sa-cb');
+    if (sa) sa.checked = false;
+    updateBulk();
+  }
+  function updateBulk() {
+    var ids = Object.keys(selIds).filter(function(k) { return selIds[k]; });
+    var bar = document.getElementById('bulk-bar');
+    if (ids.length > 0) { bar.classList.add('on'); document.getElementById('bulk-cnt').textContent = ids.length + ' selected'; }
+    else { bar.classList.remove('on'); }
+  }
+
+  // ── Load reviews ───────────────────────────────────────────────
+  function loadReviews(pg) {
+    curPage = pg;
+    var rating = document.getElementById('rf').value;
+    var df = document.getElementById('df').value;
+    var dt = document.getElementById('dt').value;
+    var srch = document.getElementById('si').value.trim();
+    var url = '/api/admin/reviews?page=' + pg;
+    if (selHotel) url += '&hotel=' + encodeURIComponent(selHotel);
+    if (rating) url += '&rating=' + rating;
+    if (srch)   url += '&search=' + encodeURIComponent(srch);
+    document.getElementById('table-wrap').innerHTML = '<div class="msg">Loading\u2026</div>';
+    fetch(url, { headers: ah() })
+      .then(function(r) { if (r.status === 401) { sessionStorage.removeItem('adminCreds'); window.location.reload(); return null; } return r.json(); })
+      .then(function(data) {
+        if (!data) return;
+        var revs = data.reviews || [];
+        if (df) revs = revs.filter(function(r) { return r.created_at && r.created_at.slice(0,10) >= df; });
+        if (dt) revs = revs.filter(function(r) { return r.created_at && r.created_at.slice(0,10) <= dt; });
+        allRevs = revs;
+        renderTable(revs);
+        renderPag(data.total);
+      })
+      .catch(function() { document.getElementById('table-wrap').innerHTML = '<div class="msg err">Failed to load reviews.</div>'; });
+  }
+
+  // ── Table ──────────────────────────────────────────────────────
+  function renderTable(revs) {
+    if (!revs || !revs.length) { document.getElementById('table-wrap').innerHTML = '<div class="msg">No reviews found.</div>'; return; }
+    var html = '<table><thead><tr>' +
+      '<th class="thc"><input type="checkbox" id="sa-cb" onchange="toggleAll(this.checked)" /></th>' +
+      '<th>Date</th><th>Hotel</th><th>Rating</th><th>Feedback</th><th class="tha"></th>' +
+      '</tr></thead><tbody>';
+    revs.forEach(function(r) {
+      var chk = selIds[r.id] ? ' checked' : '';
+      html += '<tr>';
+      html += '<td class="tdc"><input type="checkbox" class="rc"' + chk + ' onchange="toggleSel(' + r.id + ',this.checked)" /></td>';
+      html += '<td class="dc">' + fmtDate(r.created_at) + '</td>';
+      html += '<td><span class="badge-h">' + esc(r.hotel_slug || '\u2014') + '</span></td>';
+      html += '<td class="sic ' + sCls(r.rating) + '">' + sStar(r.rating) + '</td>';
+      if (r.feedback) {
+        var short = esc(r.feedback.length > 90 ? r.feedback.slice(0, 90) + '\u2026' : r.feedback);
+        var full  = esc(r.feedback);
+        var need  = r.feedback.length > 90;
+        html += '<td class="fbc"><span class="fbs" id="fs-' + r.id + '">' + short + '</span>';
+        if (need) {
+          html += '<span class="fbf" id="ff-' + r.id + '">' + full + '</span>';
+          html += '<button class="fbt" id="ft-' + r.id + '" onclick="togFb(' + r.id + ')">Show more</button>';
+        }
+        html += '</td>';
+      } else {
+        html += '<td class="fbc"><span class="nofb">No feedback</span></td>';
+      }
+      html += '<td><button class="del-btn" onclick="deleteOne(' + r.id + ')" title="Delete">\uD83D\uDDD1\uFE0F</button></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('table-wrap').innerHTML = html;
+  }
+
+  function togFb(id) {
+    var fs = document.getElementById('fs-' + id);
+    var ff = document.getElementById('ff-' + id);
+    var ft = document.getElementById('ft-' + id);
+    if (!fs || !ff) return;
+    var exp = ff.style.display === 'block';
+    fs.style.display = exp ? 'block' : 'none';
+    ff.style.display = exp ? 'none' : 'block';
+    ft.textContent = exp ? 'Show more' : 'Show less';
+  }
+
+  // ── Pagination ─────────────────────────────────────────────────
+  function renderPag(total) {
+    var pages = Math.ceil(total / PAGE);
+    var el = document.getElementById('pag');
+    el.innerHTML = '';
+    if (pages <= 1) return;
+    var pb = document.createElement('button');
+    pb.textContent = '\u2190'; pb.disabled = curPage === 1;
+    pb.onclick = function() { if (curPage > 1) loadReviews(curPage - 1); };
+    el.appendChild(pb);
+    for (var i = 1; i <= pages; i++) {
+      if (pages > 7 && Math.abs(i - curPage) > 2 && i !== 1 && i !== pages) {
+        if (i === curPage - 3 || i === curPage + 3) {
+          var dots = document.createElement('button'); dots.textContent = '\u2026'; dots.disabled = true; el.appendChild(dots);
+        }
+        continue;
+      }
+      (function(p) {
+        var b = document.createElement('button');
+        b.textContent = p;
+        if (p === curPage) b.classList.add('active');
+        b.onclick = function() { loadReviews(p); };
+        el.appendChild(b);
+      })(i);
+    }
+    var nb = document.createElement('button');
+    nb.textContent = '\u2192'; nb.disabled = curPage === pages;
+    nb.onclick = function() { if (curPage < pages) loadReviews(curPage + 1); };
+    el.appendChild(nb);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────
+  function sStar(r) { var s=''; for(var i=1;i<=5;i++) s += i<=r?'\u2605':'\u2606'; return s; }
+  function sCls(r)  { return r >= 4 ? 'g' : r === 3 ? 'y' : 'r'; }
+  function fmtDate(iso) {
+    if (!iso) return '\u2014';
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+           ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+</script>
+</body>
+</html>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: #0e1117; color: #c9d1d9; min-height: 100vh;

@@ -472,7 +472,19 @@ body.themed {
   background: var(--theme-gradient);
 }
 body.themed::before {
-  background: radial-gradient(circle, var(--theme-card-accent) 0%, transparent 65%);
+  background: radial-gradient(
+    circle,
+    var(--theme-card-accent) 0%,
+    transparent 65%
+  );
+}
+/* Secondary ambient orb also themed */
+body.themed::after {
+  background: radial-gradient(
+    circle,
+    var(--theme-card-accent) 0%,
+    transparent 65%
+  );
 }
 body.themed .container {
   border-color: var(--theme-card-border);
@@ -482,10 +494,20 @@ body.themed .container {
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 body.themed .container::before {
-  background: linear-gradient(90deg, transparent, var(--theme-accent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--theme-accent),
+    transparent
+  );
 }
 body.themed .divider {
-  background: linear-gradient(90deg, transparent, var(--theme-divider), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--theme-divider),
+    transparent
+  );
 }
 body.themed .star:hover,
 body.themed .star.selected {
