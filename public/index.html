@@ -107,6 +107,7 @@
     var roomError  = document.getElementById('room-error');
     var roomSkip   = document.getElementById('room-skip');
     var roomWrap   = document.getElementById('room-wrap');
+    var roomTick   = document.getElementById('room-tick');
     var questionEl = document.getElementById('question');
     var starsEl    = document.getElementById('stars');
 
@@ -119,31 +120,72 @@
       return !isNaN(n) && VALID_ROOMS.indexOf(n) !== -1;
     }
 
-    function enableStars(room) {
-      roomNumber = room;
-      roomConfirmed = true;
-      roomWrap.style.display = 'none';
+    // Show stars; optional delay before clicks are enabled (prevents skip click-through)
+    function showStars(delayMs) {
       questionEl.style.display = '';
       starsEl.setAttribute('aria-hidden', 'false');
-      document.querySelectorAll('.star').forEach(function(s) { s.disabled = false; });
       starsEl.classList.add('stars-ready');
+      setTimeout(function() {
+        document.querySelectorAll('.star').forEach(function(s) { s.disabled = false; });
+      }, delayMs || 0);
+    }
+
+    // Valid room entered: lock input, show tick, reveal stars
+    function confirmRoom(val) {
+      roomNumber = val;
+      roomConfirmed = true;
+      roomInput.value = val;
+      roomInput.readOnly = true;
+      roomInput.classList.add('room-input-confirmed');
+      roomTick.style.display = 'inline';
+      roomError.textContent = '';
+      roomSkip.style.display = 'none';
+      showStars(0);
+    }
+
+    // Guest tapped "I don't know": show placeholder, reveal stars after delay
+    function confirmSkip() {
+      roomNumber = null;
+      roomConfirmed = true;
+      roomInput.value = '';
+      roomInput.placeholder = 'Not provided';
+      roomInput.readOnly = true;
+      roomInput.classList.add('room-input-skipped');
+      roomError.textContent = '';
+      roomSkip.style.display = 'none';
+      showStars(350);
     }
 
     roomInput.addEventListener('input', function() {
+      if (roomConfirmed) return;
       var val = roomInput.value.replace(/\D/g, '');
       roomInput.value = val;
       roomError.textContent = '';
       if (val.length === 3) {
         if (validateRoom(val)) {
-          enableStars(val);
+          confirmRoom(val);
         } else {
-          roomError.textContent = 'Please enter a valid room number (101–130 or 201–230).';
+          roomError.textContent = 'Please enter a valid room number.';
         }
       }
     });
 
+    roomInput.addEventListener('blur', function() {
+      if (roomConfirmed) return;
+      var val = roomInput.value;
+      if (val.length > 0 && val.length < 3) {
+        roomError.textContent = 'Please enter your full 3-digit room number.';
+      } else if (val.length === 3 && !validateRoom(val)) {
+        roomError.textContent = 'Please enter a valid room number.';
+      }
+    });
+
+    roomInput.addEventListener('focus', function() {
+      if (!roomConfirmed) roomError.textContent = '';
+    });
+
     roomSkip.addEventListener('click', function() {
-      enableStars(null);
+      confirmSkip();
     });
 
     stars.forEach(function(star) {
@@ -207,6 +249,14 @@
     // Reset state smoothly when user navigates back (no reload flash)
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
+        // Hard-reset opacity first so the fade-in fires cleanly
+        document.body.style.opacity = '0';
+        document.body.style.animation = 'none';
+        document.body.classList.remove('fade-out');
+        document.body.offsetHeight; // force reflow
+        document.body.style.opacity = '';
+        document.body.style.animation = '';
+
         submitted = false;
         selectedRating = 0;
         roomNumber = null;
@@ -226,10 +276,6 @@
         starsEl.setAttribute('aria-hidden', 'true');
         document.querySelectorAll('.star').forEach(function(s) { s.disabled = true; });
         starsEl.classList.remove('stars-ready');
-        document.body.classList.remove('fade-out');
-        document.body.style.animation = 'none';
-        document.body.offsetHeight; // force reflow
-        document.body.style.animation = '';
       }
     });
 

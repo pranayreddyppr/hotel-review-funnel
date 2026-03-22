@@ -132,16 +132,18 @@
     // Reset state smoothly when user navigates back (no reload flash)
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
+        document.body.style.opacity = '0';
+        document.body.style.animation = 'none';
+        document.body.classList.remove('fade-out');
+        document.body.offsetHeight;
+        document.body.style.opacity = '';
+        document.body.style.animation = '';
         document.getElementById('feedback-text').value = '';
         document.getElementById('char-counter').textContent = '0 / 500';
         document.getElementById('error-msg').textContent = '';
         var btn = document.getElementById('submit-btn');
         btn.disabled = !reviewToken;
         btn.textContent = 'Submit Feedback';
-        document.body.classList.remove('fade-out');
-        document.body.style.animation = 'none';
-        document.body.offsetHeight; // force reflow
-        document.body.style.animation = '';
       }
     });
   </script>
