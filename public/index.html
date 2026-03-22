@@ -227,7 +227,7 @@
       fetch('/api/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: rating, hotelSlug: hotelSlug, roomNumber: roomNumber })
+        body: JSON.stringify({ rating: Number(rating), hotelSlug: hotelSlug, roomNumber: roomNumber })
       })
       .then(function(response) { return response.json(); })
       .then(function(data) {
