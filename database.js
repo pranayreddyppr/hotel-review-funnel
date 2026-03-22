@@ -16,37 +16,73 @@ async function saveRating(hotelSlug, rating, roomNumber) {
     .insert({ hotel_slug: hotelSlug, rating, token, room_number: roomNumber || null })
     .select("token")
     .single();
-  if (error) throw error;
+  if (error) {
+    if (roomNumber) {
+      // Retry without room_number if column doesn't exist yet
+      console.error("saveRating with room_number failed, retrying without:", error.message);
+      const t2 = crypto.randomUUID();
+      const { data: d2, error: err2 } = await supabase
+        .from("reviews")
+        .insert({ hotel_slug: hotelSlug, rating, token: t2 })
+        .select("token")
+        .single();
+      if (err2) throw err2;
+      return d2.token;
+    }
+    throw error;
+  }
   return data.token;
 }
 
 // saveFullReview(hotelSlug, rating, roomNumber, feedback)
 // Used for LOW ratings — saves rating + feedback together in one shot.
 // This ensures nothing appears in admin until feedback is actually submitted.
+// Falls back to saving without room_number if the column doesn't exist yet.
 async function saveFullReview(hotelSlug, rating, roomNumber, feedback) {
   const token = crypto.randomUUID();
   const { error } = await supabase
     .from("reviews")
     .insert({ hotel_slug: hotelSlug, rating, token, room_number: roomNumber || null, feedback });
-  if (error) throw error;
+  if (error) {
+    if (roomNumber) {
+      // Column may not exist yet — retry without room_number so feedback is never lost
+      console.error("saveFullReview with room_number failed, retrying without:", error.message);
+      const fallbackToken = crypto.randomUUID();
+      const { error: err2 } = await supabase
+        .from("reviews")
+        .insert({ hotel_slug: hotelSlug, rating, token: fallbackToken, feedback });
+      if (err2) throw err2;
+    } else {
+      throw error;
+    }
+  }
   return true;
 }
 
 // isDuplicateReview(hotelSlug, roomNumber)
 // Returns true if the same room already submitted a review in the past 24 hours.
 // Only checked when roomNumber is provided.
+// Returns false on any DB error so a schema issue never blocks a guest submission.
 async function isDuplicateReview(hotelSlug, roomNumber) {
   if (!roomNumber) return false;
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase
-    .from("reviews")
-    .select("id")
-    .eq("hotel_slug", hotelSlug)
-    .eq("room_number", roomNumber)
-    .gte("created_at", since)
-    .limit(1);
-  if (error) throw error;
-  return data && data.length > 0;
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("id")
+      .eq("hotel_slug", hotelSlug)
+      .eq("room_number", roomNumber)
+      .gte("created_at", since)
+      .limit(1);
+    if (error) {
+      console.error("isDuplicateReview error (allowing submission):", error.message);
+      return false;
+    }
+    return data && data.length > 0;
+  } catch (err) {
+    console.error("isDuplicateReview exception (allowing submission):", err);
+    return false;
+  }
 }
 
 // saveFeedback(token, feedback)
