@@ -46,10 +46,10 @@
     <h1 class="feedback-heading">We’d love to hear from you.</h1>
     <div class="divider"></div>
     <p class="feedback-sub">Your experience matters to us. Please share what happened &mdash; every response is personally reviewed by our team.</p>
-    <textarea id="feedback-text" placeholder="Tell us what happened…" maxlength="500" style="margin-top:24px;"></textarea>
+    <textarea id="feedback-text" placeholder="Tell us what happened…" maxlength="500"></textarea>
     <p class="char-counter" id="char-counter">0 / 500</p>
     <p class="error-message" id="error-msg"></p>
-    <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">Submit Feedback</button>
+    <button class="btn-submit" id="submit-btn">Submit Feedback</button>
   </div>
   <script>
     var urlParams = new URLSearchParams(window.location.search);
@@ -72,9 +72,12 @@
           }
         }).catch(function() {});
     }
+    var btn = document.getElementById('submit-btn');
     if (!reviewToken || reviewToken.trim().length === 0) {
       document.getElementById('error-msg').textContent = 'Something went wrong. Please go back and try again.';
-      document.getElementById('submit-btn').disabled = true;
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', submitFeedback);
     }
     var textarea = document.getElementById('feedback-text');
     var counter = document.getElementById('char-counter');
@@ -87,8 +90,8 @@
     });
     function submitFeedback() {
       var feedbackText = textarea.value;
-      var errorEl = document.getElementById('error-msg');
       var btn = document.getElementById('submit-btn');
+      var errorEl = document.getElementById('error-msg');
       errorEl.textContent = '';
       if (!feedbackText || feedbackText.trim().length === 0) {
         errorEl.textContent = 'Please write something before submitting.';

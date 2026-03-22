@@ -19,7 +19,7 @@
     <div class="room-wrap" id="room-wrap">
       <label class="room-label" for="room-input">What was your room number?</label>
       <div class="room-input-row">
-        <input type="tel" id="room-input" class="room-input" placeholder="e.g. 115" maxlength="3" inputmode="numeric" autocomplete="off" />
+        <input type="tel" id="room-input" class="room-input" placeholder="e.g 115" maxlength="3" inputmode="numeric" autocomplete="off" />
         <span class="room-tick" id="room-tick" style="display:none">&#10003;</span>
       </div>
       <p class="room-error" id="room-error"></p>
@@ -111,13 +111,9 @@
     var questionEl = document.getElementById('question');
     var starsEl    = document.getElementById('stars');
 
-    var VALID_ROOMS = [];
-    for (var i = 101; i <= 130; i++) VALID_ROOMS.push(i);
-    for (var i = 201; i <= 230; i++) VALID_ROOMS.push(i);
-
     function validateRoom(val) {
       var n = parseInt(val, 10);
-      return !isNaN(n) && VALID_ROOMS.indexOf(n) !== -1;
+      return !isNaN(n) && ((n >= 101 && n <= 130) || (n >= 201 && n <= 230));
     }
 
     // Show stars; optional delay before clicks are enabled (prevents skip click-through)
@@ -223,14 +219,12 @@
     function showRatingError(msg) {
       var el = document.getElementById('status');
       el.textContent = msg;
-      el.style.color = '#ff6b6b';
-      el.style.fontWeight = '600';
+      el.classList.add('error');
     }
     function clearRatingError() {
       var el = document.getElementById('status');
       el.textContent = '';
-      el.style.color = '';
-      el.style.fontWeight = '';
+      el.classList.remove('error');
     }
     function submitRating(rating) {
       if (!hotelSlug) return;

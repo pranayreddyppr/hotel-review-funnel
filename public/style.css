@@ -352,12 +352,18 @@ body::after {
   letter-spacing: 0.04em;
 }
 
+.status-message.error {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
 /* ─────────────────────────────────────────────
    FEEDBACK TEXTAREA
 ───────────────────────────────────────────── */
 textarea {
   width: 100%;
   min-height: 148px;
+  margin-top: 24px;
   font-size: 0.96rem;
   font-family: "Inter", inherit;
   padding: 16px 18px;

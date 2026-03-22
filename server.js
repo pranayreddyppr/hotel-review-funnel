@@ -44,15 +44,15 @@ const adminLimiter = rateLimit({
   message: { error: "Too many requests. Please try again later." },
 });
 
+// Parse JSON request bodies — must be registered before route handlers
+app.use(express.json());
+
 // Block direct URL access to admin.html / login.html — use /admin and /login routes
 app.get("/admin.html", (req, res) => res.status(404).end());
 app.get("/login.html", (req, res) => res.status(404).end());
 
 // Serve static files (HTML, CSS) from the "public" folder
 app.use(express.static(path.join(__dirname, "public")));
-
-// Parse JSON request bodies
-app.use(express.json());
 
 // ─────────────────────────────────────────────
 // Helper: look up hotel config by slug
@@ -176,16 +176,11 @@ app.post("/api/rate", apiLimiter, async (req, res) => {
       console.error("saveRating background error:", err);
     });
     return res.json({ action: "redirect", url: hotel.googleReviewUrl });
-  } else {
-    // LOW rating: don't save yet — return a signed token
-    try {
-      const reviewToken = createPendingToken(hotelSlug, rating, cleanRoom);
-      return res.json({ action: "feedback", reviewToken });
-    } catch (error) {
-      console.error("POST /api/rate error:", error);
-      return res.status(500).json({ error: "Something went wrong. Please try again." });
-    }
   }
+
+  // LOW rating: sign a pending token (nothing saved to DB until feedback is submitted)
+  const reviewToken = createPendingToken(hotelSlug, rating, cleanRoom);
+  return res.json({ action: "feedback", reviewToken });
 });
 
 // ─────────────────────────────────────────────
@@ -348,15 +343,16 @@ app.get("/api/admin/export", adminLimiter, basicAuth, async (req, res) => {
   try {
     const result = await getReviews(hotelSlug, 1, 10000);
     const rows = result.reviews;
-    const header = "Date,Hotel,Rating,Feedback\n";
+    const header = "Date,Hotel,Room,Rating,Feedback\n";
     const csvRows = rows.map(function (r) {
       const date = r.created_at || "";
       const hotel = (r.hotel_slug || "").replace(/"/g, '""');
+      const room = r.room_number || "";
       const rating = r.rating;
       const feedback = (r.feedback || "")
         .replace(/"/g, '""')
         .replace(/\n/g, " ");
-      return `"${date}","${hotel}",${rating},"${feedback}"`;
+      return `"${date}","${hotel}","${room}",${rating},"${feedback}"`;
     });
     const csv = header + csvRows.join("\n");
     const today = new Date().toISOString().slice(0, 10);
