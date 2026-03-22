@@ -220,9 +220,22 @@
       });
     }
 
+    function showRatingError(msg) {
+      var el = document.getElementById('status');
+      el.textContent = msg;
+      el.style.color = '#ff6b6b';
+      el.style.fontWeight = '600';
+    }
+    function clearRatingError() {
+      var el = document.getElementById('status');
+      el.textContent = '';
+      el.style.color = '';
+      el.style.fontWeight = '';
+    }
     function submitRating(rating) {
       if (!hotelSlug) return;
       submitted = true;
+      clearRatingError();
       document.getElementById('status').textContent = 'Submitting…';
       fetch('/api/rate', {
         method: 'POST',
@@ -232,10 +245,11 @@
       .then(function(response) { return response.json(); })
       .then(function(data) {
         if (!data.action) {
-          // Unexpected response — reset so user can try again
-          document.getElementById('status').textContent = 'Something went wrong. Please try again.';
+          showRatingError(data.error || 'Something went wrong. Please try again.');
           submitted = false;
+          selectedRating = 0;
           highlightStars(0);
+          starLabelEl.textContent = '\u00a0';
           return;
         }
         document.body.classList.add('fade-out');
@@ -248,9 +262,11 @@
         }, 230);
       })
       .catch(function() {
-        document.getElementById('status').textContent = 'Something went wrong. Please try again.';
+        showRatingError('Connection error. Please check your signal and try again.');
         submitted = false;
+        selectedRating = 0;
         highlightStars(0);
+        starLabelEl.textContent = '\u00a0';
       });
     }
 
@@ -271,7 +287,7 @@
         roomConfirmed = false;
         highlightStars(0);
         starLabelEl.textContent = '\u00a0';
-        document.getElementById('status').textContent = '';
+        clearRatingError();
         // Reset room UI
         roomInput.value = '';
         roomInput.placeholder = 'e.g. 115';

@@ -169,19 +169,22 @@ app.post("/api/rate", apiLimiter, async (req, res) => {
   }
   const cleanRoom = roomProvided ? String(parseInt(roomNumber, 10)) : null;
 
-  try {
-    if (rating >= hotel.ratingThreshold) {
-      // HIGH rating: save immediately and redirect to Google
-      await saveRating(hotelSlug, rating, cleanRoom);
-      return res.json({ action: "redirect", url: hotel.googleReviewUrl });
-    } else {
-      // LOW rating: don't save yet — return a signed token
+  if (rating >= hotel.ratingThreshold) {
+    // HIGH rating: redirect to Google immediately.
+    // Save to DB in the background — never block the user on a DB write.
+    saveRating(hotelSlug, rating, cleanRoom).catch((err) => {
+      console.error("saveRating background error:", err);
+    });
+    return res.json({ action: "redirect", url: hotel.googleReviewUrl });
+  } else {
+    // LOW rating: don't save yet — return a signed token
+    try {
       const reviewToken = createPendingToken(hotelSlug, rating, cleanRoom);
       return res.json({ action: "feedback", reviewToken });
+    } catch (error) {
+      console.error("POST /api/rate error:", error);
+      return res.status(500).json({ error: "Something went wrong. Please try again." });
     }
-  } catch (error) {
-    console.error("POST /api/rate error:", error);
-    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
