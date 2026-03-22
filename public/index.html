@@ -145,6 +145,11 @@
       });
     }
 
+    // Force a fresh reload when user navigates back (prevents stale star state)
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) { window.location.reload(); }
+    });
+
     function applyTheme(t) {
       var r = document.documentElement.style;
       r.setProperty('--theme-accent', t.accent);
