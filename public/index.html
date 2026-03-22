@@ -136,11 +136,12 @@
       roomConfirmed = true;
       roomInput.value = val;
       roomInput.readOnly = true;
+      roomInput.blur(); // dismiss keyboard so layout settles before stars appear
       roomInput.classList.add('room-input-confirmed');
       roomTick.style.display = 'inline';
       roomError.textContent = '';
       roomSkip.style.display = 'none';
-      showStars(0);
+      showStars(400); // 400ms lets keyboard fully close and layout settle
     }
 
     // Guest tapped "I don't know": show placeholder, reveal stars after delay
@@ -230,6 +231,13 @@
       })
       .then(function(response) { return response.json(); })
       .then(function(data) {
+        if (!data.action) {
+          // Unexpected response — reset so user can try again
+          document.getElementById('status').textContent = 'Something went wrong. Please try again.';
+          submitted = false;
+          highlightStars(0);
+          return;
+        }
         document.body.classList.add('fade-out');
         setTimeout(function() {
           if (data.action === 'redirect') {
