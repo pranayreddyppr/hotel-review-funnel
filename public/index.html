@@ -15,14 +15,22 @@
     <p class="cold-start-msg" id="cold-start-msg"></p>
 
     <div class="divider"></div>
-    <p class="question">How was your stay?</p>
 
-    <div class="stars" id="stars">
-      <button class="star" data-value="1" aria-label="1 star">&#9733;</button>
-      <button class="star" data-value="2" aria-label="2 stars">&#9733;</button>
-      <button class="star" data-value="3" aria-label="3 stars">&#9733;</button>
-      <button class="star" data-value="4" aria-label="4 stars">&#9733;</button>
-      <button class="star" data-value="5" aria-label="5 stars">&#9733;</button>
+    <div class="room-wrap" id="room-wrap">
+      <label class="room-label" for="room-input">What was your room number?</label>
+      <input type="tel" id="room-input" class="room-input" placeholder="e.g. 115" maxlength="3" inputmode="numeric" autocomplete="off" />
+      <p class="room-error" id="room-error"></p>
+      <button class="room-skip" id="room-skip" type="button">I don&#39;t know my room number</button>
+    </div>
+
+    <p class="question" id="question" style="display:none">How was your stay?</p>
+
+    <div class="stars" id="stars" aria-hidden="true">
+      <button class="star" data-value="1" aria-label="1 star" disabled>&#9733;</button>
+      <button class="star" data-value="2" aria-label="2 stars" disabled>&#9733;</button>
+      <button class="star" data-value="3" aria-label="3 stars" disabled>&#9733;</button>
+      <button class="star" data-value="4" aria-label="4 stars" disabled>&#9733;</button>
+      <button class="star" data-value="5" aria-label="5 stars" disabled>&#9733;</button>
     </div>
 
     <p id="star-label" class="star-label">&nbsp;</p>
@@ -89,6 +97,51 @@
     var stars = document.querySelectorAll('.star');
     var selectedRating = 0;
     var submitted = false;
+    var roomNumber = null;      // null = 'I don't know'
+    var roomConfirmed = false;
+
+    var roomInput  = document.getElementById('room-input');
+    var roomError  = document.getElementById('room-error');
+    var roomSkip   = document.getElementById('room-skip');
+    var roomWrap   = document.getElementById('room-wrap');
+    var questionEl = document.getElementById('question');
+    var starsEl    = document.getElementById('stars');
+
+    var VALID_ROOMS = [];
+    for (var i = 101; i <= 130; i++) VALID_ROOMS.push(i);
+    for (var i = 201; i <= 230; i++) VALID_ROOMS.push(i);
+
+    function validateRoom(val) {
+      var n = parseInt(val, 10);
+      return !isNaN(n) && VALID_ROOMS.indexOf(n) !== -1;
+    }
+
+    function enableStars(room) {
+      roomNumber = room;
+      roomConfirmed = true;
+      roomWrap.style.display = 'none';
+      questionEl.style.display = '';
+      starsEl.setAttribute('aria-hidden', 'false');
+      document.querySelectorAll('.star').forEach(function(s) { s.disabled = false; });
+      starsEl.classList.add('stars-ready');
+    }
+
+    roomInput.addEventListener('input', function() {
+      var val = roomInput.value.replace(/\D/g, '');
+      roomInput.value = val;
+      roomError.textContent = '';
+      if (val.length === 3) {
+        if (validateRoom(val)) {
+          enableStars(val);
+        } else {
+          roomError.textContent = 'Please enter a valid room number (101–130 or 201–230).';
+        }
+      }
+    });
+
+    roomSkip.addEventListener('click', function() {
+      enableStars(null);
+    });
 
     stars.forEach(function(star) {
       star.addEventListener('click', function() {
@@ -128,7 +181,7 @@
       fetch('/api/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: rating, hotelSlug: hotelSlug })
+        body: JSON.stringify({ rating: rating, hotelSlug: hotelSlug, roomNumber: roomNumber })
       })
       .then(function(response) { return response.json(); })
       .then(function(data) {
@@ -153,9 +206,19 @@
       if (e.persisted) {
         submitted = false;
         selectedRating = 0;
+        roomNumber = null;
+        roomConfirmed = false;
         highlightStars(0);
         starLabelEl.textContent = '\u00a0';
         document.getElementById('status').textContent = '';
+        // Reset room UI
+        roomInput.value = '';
+        roomError.textContent = '';
+        roomWrap.style.display = '';
+        questionEl.style.display = 'none';
+        starsEl.setAttribute('aria-hidden', 'true');
+        document.querySelectorAll('.star').forEach(function(s) { s.disabled = true; });
+        starsEl.classList.remove('stars-ready');
         document.body.classList.remove('fade-out');
         document.body.style.animation = 'none';
         document.body.offsetHeight; // force reflow

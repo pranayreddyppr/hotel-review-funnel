@@ -18,3 +18,11 @@ CREATE INDEX IF NOT EXISTS idx_reviews_hotel_slug ON reviews (hotel_slug);
 
 -- Index for sorting newest first
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (created_at DESC);
+
+-- ── 2024 additions ────────────────────────────────────────────────────────────
+-- Run these if your table already exists (safe to run multiple times)
+
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS room_number TEXT;
+
+-- Index for fast duplicate lookups (room + hotel + date)
+CREATE INDEX IF NOT EXISTS idx_reviews_room ON reviews (hotel_slug, room_number, created_at DESC);

@@ -1,8 +1,11 @@
 require("dotenv").config();
 const config = require("./config");
 const QRCode = require("qrcode");
+const crypto = require("crypto");
 const {
   saveRating,
+  saveFullReview,
+  isDuplicateReview,
   saveFeedback,
   getReviews,
   deleteReview,
@@ -60,6 +63,40 @@ function getHotel(slug) {
 }
 
 // ─────────────────────────────────────────────
+// Signed pending token — avoids saving to DB until feedback is submitted
+// Payload: { h: hotelSlug, r: rating, room: roomNumber|null, ts: timestamp }
+// ─────────────────────────────────────────────
+function createPendingToken(hotelSlug, rating, roomNumber) {
+  const payload = Buffer.from(JSON.stringify({
+    h: hotelSlug, r: rating, room: roomNumber || null, ts: Date.now()
+  })).toString('base64url');
+  const secret = process.env.ADMIN_PASS || 'fallback-dev-secret';
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return `pending.${payload}.${sig}`;
+}
+
+function verifyPendingToken(token) {
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== 'pending') return null;
+  const [, payload, sig] = parts;
+  const secret = process.env.ADMIN_PASS || 'fallback-dev-secret';
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  if (sig !== expected) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (Date.now() - data.ts > 4 * 60 * 60 * 1000) return null; // 4-hour expiry
+    return data;
+  } catch { return null; }
+}
+
+// Validate room number: must be 101-130 or 201-230
+function isValidRoom(room) {
+  if (!room) return false;
+  const n = parseInt(room, 10);
+  return (n >= 101 && n <= 130) || (n >= 201 && n <= 230);
+}
+
+// ─────────────────────────────────────────────
 // Basic Auth middleware for admin routes
 // ─────────────────────────────────────────────
 function basicAuth(req, res, next) {
@@ -109,82 +146,89 @@ app.get("/api/config", (req, res) => {
 
 // ─────────────────────────────────────────────
 // POST /api/rate
-// Body: { rating: <integer 1-5>, hotelSlug: <string> }
+// Body: { rating, hotelSlug, roomNumber }
+// HIGH ratings: save to DB immediately, redirect to Google.
+// LOW ratings:  return a signed pending token (nothing saved to DB yet).
 // ─────────────────────────────────────────────
 app.post("/api/rate", apiLimiter, async (req, res) => {
-  const { rating, hotelSlug } = req.body;
+  const { rating, hotelSlug, roomNumber } = req.body;
 
   const hotel = getHotel(hotelSlug);
   if (!hotel) {
-    return res
-      .status(404)
-      .json({ error: "Hotel not found. Please check your link." });
+    return res.status(404).json({ error: "Hotel not found. Please check your link." });
   }
 
-  if (
-    typeof rating !== "number" ||
-    !Number.isInteger(rating) ||
-    rating < 1 ||
-    rating > 5
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Rating must be an integer between 1 and 5." });
+  if (typeof rating !== "number" || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: "Rating must be an integer between 1 and 5." });
   }
+
+  // roomNumber must be valid or explicitly null (I don't know)
+  const roomProvided = roomNumber !== null && roomNumber !== undefined && roomNumber !== '';
+  if (roomProvided && !isValidRoom(roomNumber)) {
+    return res.status(400).json({ error: "Invalid room number." });
+  }
+  const cleanRoom = roomProvided ? String(parseInt(roomNumber, 10)) : null;
 
   try {
-    const reviewToken = await saveRating(hotelSlug, rating);
     if (rating >= hotel.ratingThreshold) {
+      // HIGH rating: save immediately and redirect to Google
+      await saveRating(hotelSlug, rating, cleanRoom);
       return res.json({ action: "redirect", url: hotel.googleReviewUrl });
     } else {
+      // LOW rating: don't save yet — return a signed token
+      const reviewToken = createPendingToken(hotelSlug, rating, cleanRoom);
       return res.json({ action: "feedback", reviewToken });
     }
   } catch (error) {
     console.error("POST /api/rate error:", error);
-    return res
-      .status(500)
-      .json({ error: "Something went wrong. Please try again." });
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
 // ─────────────────────────────────────────────
 // POST /api/feedback
 // Body: { reviewToken: <string>, feedback: <string> }
+// For signed pending tokens: verify, check duplicate, save full record.
 // ─────────────────────────────────────────────
 app.post("/api/feedback", apiLimiter, async (req, res) => {
   const { reviewToken, feedback } = req.body;
 
-  if (
-    !reviewToken ||
-    typeof reviewToken !== "string" ||
-    reviewToken.trim().length === 0
-  ) {
+  if (!reviewToken || typeof reviewToken !== "string" || reviewToken.trim().length === 0) {
     return res.status(400).json({ error: "Invalid review token." });
   }
 
-  if (
-    !feedback ||
-    typeof feedback !== "string" ||
-    feedback.trim().length === 0
-  ) {
+  if (!feedback || typeof feedback !== "string" || feedback.trim().length === 0) {
     return res.status(400).json({ error: "Feedback cannot be empty." });
   }
 
   const cleanFeedback = feedback.trim().slice(0, 500);
+  const token = reviewToken.trim();
 
   try {
-    const saved = await saveFeedback(reviewToken.trim(), cleanFeedback);
-    if (!saved) {
-      return res
-        .status(400)
-        .json({ error: "Review not found or feedback already submitted." });
+    // Signed pending token path (low ratings)
+    if (token.startsWith('pending.')) {
+      const payload = verifyPendingToken(token);
+      if (!payload) {
+        return res.status(400).json({ error: "Session expired. Please go back and try again." });
+      }
+      // Duplicate check: same room + hotel in last 24h
+      const dup = await isDuplicateReview(payload.h, payload.room);
+      if (dup) {
+        return res.status(409).json({ error: "A review from this room was already submitted today. Thank you!" });
+      }
+      await saveFullReview(payload.h, payload.r, payload.room, cleanFeedback);
+      return res.json({ success: true });
     }
-    res.json({ success: true });
+
+    // Legacy UUID token path (high ratings that somehow reach feedback — shouldn't happen)
+    const saved = await saveFeedback(token, cleanFeedback);
+    if (!saved) {
+      return res.status(400).json({ error: "Review not found or feedback already submitted." });
+    }
+    return res.json({ success: true });
   } catch (error) {
     console.error("POST /api/feedback error:", error);
-    return res
-      .status(500)
-      .json({ error: "Something went wrong. Please try again." });
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 

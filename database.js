@@ -6,18 +6,47 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-// saveRating(hotelSlug, rating)
-// Inserts a new review row with a random UUID token.
-// Returns the token — used by the guest to submit feedback without exposing a guessable ID.
-async function saveRating(hotelSlug, rating) {
+// saveRating(hotelSlug, rating, roomNumber)
+// Used for HIGH ratings only (redirect to Google).
+// Inserts a completed review row immediately.
+async function saveRating(hotelSlug, rating, roomNumber) {
   const token = crypto.randomUUID();
   const { data, error } = await supabase
     .from("reviews")
-    .insert({ hotel_slug: hotelSlug, rating, token })
+    .insert({ hotel_slug: hotelSlug, rating, token, room_number: roomNumber || null })
     .select("token")
     .single();
   if (error) throw error;
   return data.token;
+}
+
+// saveFullReview(hotelSlug, rating, roomNumber, feedback)
+// Used for LOW ratings — saves rating + feedback together in one shot.
+// This ensures nothing appears in admin until feedback is actually submitted.
+async function saveFullReview(hotelSlug, rating, roomNumber, feedback) {
+  const token = crypto.randomUUID();
+  const { error } = await supabase
+    .from("reviews")
+    .insert({ hotel_slug: hotelSlug, rating, token, room_number: roomNumber || null, feedback });
+  if (error) throw error;
+  return true;
+}
+
+// isDuplicateReview(hotelSlug, roomNumber)
+// Returns true if the same room already submitted a review in the past 24 hours.
+// Only checked when roomNumber is provided.
+async function isDuplicateReview(hotelSlug, roomNumber) {
+  if (!roomNumber) return false;
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("id")
+    .eq("hotel_slug", hotelSlug)
+    .eq("room_number", roomNumber)
+    .gte("created_at", since)
+    .limit(1);
+  if (error) throw error;
+  return data && data.length > 0;
 }
 
 // saveFeedback(token, feedback)
@@ -139,6 +168,8 @@ async function getStats(hotelSlug) {
 
 module.exports = {
   saveRating,
+  saveFullReview,
+  isDuplicateReview,
   saveFeedback,
   getReviews,
   deleteReview,

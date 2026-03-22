@@ -170,6 +170,80 @@ body::after {
   letter-spacing: 0.03em;
 }
 
+/* ─────────────────────────────────────────────
+   ROOM NUMBER INPUT
+───────────────────────────────────────────── */
+.room-wrap {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.room-label {
+  display: block;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  margin-bottom: 12px;
+}
+
+.room-input {
+  width: 110px;
+  padding: 13px 16px;
+  font-size: 1.3rem;
+  font-family: "Inter", inherit;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.room-input::-webkit-inner-spin-button,
+.room-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.room-input:focus {
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.08);
+}
+
+.room-error {
+  font-size: 0.8rem;
+  color: #ff7a7a;
+  min-height: 20px;
+  margin-top: 8px;
+}
+
+.room-skip {
+  display: inline-block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.18s;
+}
+
+.room-skip:hover { color: rgba(255, 255, 255, 0.55); }
+
+/* Stars locked until room confirmed */
+.stars:not(.stars-ready) .star {
+  opacity: 0.25;
+  pointer-events: none;
+  cursor: default;
+}
+
 /* Gold divider */
 .divider {
   width: 36px;

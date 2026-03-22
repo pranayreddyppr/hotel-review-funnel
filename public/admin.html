@@ -600,7 +600,7 @@
     if (!revs || !revs.length) { document.getElementById('table-wrap').innerHTML = '<div class="msg">No reviews found.</div>'; return; }
     var html = '<table><thead><tr>' +
       '<th class="thc"><input type="checkbox" id="sa-cb" onchange="toggleAll(this.checked)" /></th>' +
-      '<th>Date</th><th>Hotel</th><th>Rating</th><th>Feedback</th><th class="tha"></th>' +
+      '<th>Date</th><th>Hotel</th><th>Room</th><th>Rating</th><th>Feedback</th><th class="tha"></th>' +
       '</tr></thead><tbody>';
     revs.forEach(function(r) {
       var chk = selIds[r.id] ? ' checked' : '';
@@ -608,6 +608,7 @@
       html += '<td class="tdc"><input type="checkbox" class="rc"' + chk + ' onchange="toggleSel(' + r.id + ',this.checked)" /></td>';
       html += '<td class="dc">' + fmtDate(r.created_at) + '</td>';
       html += '<td><span class="badge-h">' + esc(r.hotel_slug || '\u2014') + '</span></td>';
+      html += '<td class="dc">' + esc(r.room_number || '\u2014') + '</td>';
       html += '<td class="sic ' + sCls(r.rating) + '">' + sStar(r.rating) + '</td>';
       if (r.feedback) {
         var short = esc(r.feedback.length > 90 ? r.feedback.slice(0, 90) + '\u2026' : r.feedback);
