@@ -237,6 +237,34 @@ body::after {
 
 .room-skip:hover { color: rgba(255, 255, 255, 0.55); }
 
+.room-input-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.room-tick {
+  font-size: 1.2rem;
+  color: #4ade80;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.room-input.room-input-confirmed {
+  border-color: rgba(74, 222, 128, 0.5);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: default;
+}
+
+.room-input.room-input-skipped {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+}
+
 /* Stars locked until room confirmed */
 .stars:not(.stars-ready) .star {
   opacity: 0.25;

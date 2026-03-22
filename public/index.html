@@ -18,7 +18,10 @@
 
     <div class="room-wrap" id="room-wrap">
       <label class="room-label" for="room-input">What was your room number?</label>
-      <input type="tel" id="room-input" class="room-input" placeholder="e.g. 115" maxlength="3" inputmode="numeric" autocomplete="off" />
+      <div class="room-input-row">
+        <input type="tel" id="room-input" class="room-input" placeholder="e.g. 115" maxlength="3" inputmode="numeric" autocomplete="off" />
+        <span class="room-tick" id="room-tick" style="display:none">&#10003;</span>
+      </div>
       <p class="room-error" id="room-error"></p>
       <button class="room-skip" id="room-skip" type="button">I don&#39;t know my room number</button>
     </div>
@@ -213,8 +216,12 @@
         document.getElementById('status').textContent = '';
         // Reset room UI
         roomInput.value = '';
+        roomInput.placeholder = 'e.g. 115';
+        roomInput.readOnly = false;
+        roomInput.classList.remove('room-input-confirmed', 'room-input-skipped');
+        roomTick.style.display = 'none';
         roomError.textContent = '';
-        roomWrap.style.display = '';
+        roomSkip.style.display = '';
         questionEl.style.display = 'none';
         starsEl.setAttribute('aria-hidden', 'true');
         document.querySelectorAll('.star').forEach(function(s) { s.disabled = true; });
