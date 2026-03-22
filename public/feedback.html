@@ -106,7 +106,8 @@
         if (data.success) {
           var redirectUrl = 'thankyou.html';
           if (hotelSlug) redirectUrl += '?hotel=' + encodeURIComponent(hotelSlug);
-          window.location.href = redirectUrl;
+          document.body.classList.add('fade-out');
+          setTimeout(function() { window.location.href = redirectUrl; }, 180);
         } else {
           errorEl.textContent = data.error || 'Something went wrong. Please try again.';
           btn.disabled = false;
@@ -128,9 +129,21 @@
       document.body.classList.add('themed');
       if (t.slug) document.body.dataset.hotel = t.slug;
     }
-    // Force a fresh reload when user navigates back (prevents stale form state)
+    // Reset state smoothly when user navigates back (no reload flash)
     window.addEventListener('pageshow', function(e) {
-      if (e.persisted) { window.location.reload(); }
+      if (e.persisted) {
+        document.getElementById('feedback-text').value = '';
+        document.getElementById('char-counter').textContent = '0 / 500';
+        document.getElementById('error-msg').textContent = '';
+        var btn = document.getElementById('submit-btn');
+        btn.disabled = !reviewToken;
+        btn.textContent = 'Submit Feedback';
+        document.body.classList.remove('fade-out');
+        var c = document.querySelector('.container');
+        c.style.animation = 'none';
+        c.offsetHeight;
+        c.style.animation = '';
+      }
     });
   </script>
 </body>

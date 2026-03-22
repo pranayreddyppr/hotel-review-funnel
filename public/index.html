@@ -132,11 +132,14 @@
       })
       .then(function(response) { return response.json(); })
       .then(function(data) {
-        if (data.action === 'redirect') {
-          window.location.href = data.url;
-        } else if (data.action === 'feedback') {
-          window.location.href = 'feedback.html?token=' + encodeURIComponent(data.reviewToken) + '&hotel=' + encodeURIComponent(hotelSlug);
-        }
+        document.body.classList.add('fade-out');
+        setTimeout(function() {
+          if (data.action === 'redirect') {
+            window.location.href = data.url;
+          } else if (data.action === 'feedback') {
+            window.location.href = 'feedback.html?token=' + encodeURIComponent(data.reviewToken) + '&hotel=' + encodeURIComponent(hotelSlug);
+          }
+        }, 180);
       })
       .catch(function() {
         document.getElementById('status').textContent = 'Something went wrong. Please try again.';
@@ -145,9 +148,20 @@
       });
     }
 
-    // Force a fresh reload when user navigates back (prevents stale star state)
+    // Reset state smoothly when user navigates back (no reload flash)
     window.addEventListener('pageshow', function(e) {
-      if (e.persisted) { window.location.reload(); }
+      if (e.persisted) {
+        submitted = false;
+        selectedRating = 0;
+        highlightStars(0);
+        starLabelEl.textContent = '\u00a0';
+        document.getElementById('status').textContent = '';
+        document.body.classList.remove('fade-out');
+        var c = document.querySelector('.container');
+        c.style.animation = 'none';
+        c.offsetHeight;
+        c.style.animation = '';
+      }
     });
 
     function applyTheme(t) {

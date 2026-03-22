@@ -36,6 +36,11 @@ body {
   color: #fff;
   position: relative;
   overflow-x: hidden; /* keep orbs clipped; allow vertical scroll on mobile */
+  transition: opacity 0.18s ease;
+}
+
+body.fade-out {
+  opacity: 0 !important;
 }
 
 /* Ambient glow orbs */

@@ -79,9 +79,12 @@
       document.body.classList.add('themed');
       if (t.slug) document.body.dataset.hotel = t.slug;
     }
-    // Force a fresh reload when user navigates back
+    // On back navigation, redirect cleanly to the rating page
     window.addEventListener('pageshow', function(e) {
-      if (e.persisted) { window.location.reload(); }
+      if (e.persisted) {
+        var dest = 'index.html' + (hotelSlug ? '?hotel=' + encodeURIComponent(hotelSlug) : '');
+        window.location.replace(dest);
+      }
     });
   </script>
 </body>

@@ -676,9 +676,12 @@
     // Clear error when user starts typing
     usernameEl.addEventListener('input', clearError);
     passwordEl.addEventListener('input', clearError);
-    // Force a fresh reload when user navigates back
+    // Reset state smoothly when user navigates back (no reload flash)
     window.addEventListener('pageshow', function(e) {
-      if (e.persisted) { window.location.reload(); }
+      if (e.persisted) {
+        passwordEl.value = '';
+        clearError();
+      }
     });
   </script>
 </body>
