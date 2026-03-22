@@ -681,6 +681,10 @@
       if (e.persisted) {
         passwordEl.value = '';
         clearError();
+        document.body.classList.remove('fade-out');
+        document.body.style.animation = 'none';
+        document.body.offsetHeight; // force reflow
+        document.body.style.animation = '';
       }
     });
   </script>

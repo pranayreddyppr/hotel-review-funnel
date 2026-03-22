@@ -139,7 +139,7 @@
           } else if (data.action === 'feedback') {
             window.location.href = 'feedback.html?token=' + encodeURIComponent(data.reviewToken) + '&hotel=' + encodeURIComponent(hotelSlug);
           }
-        }, 180);
+        }, 230);
       })
       .catch(function() {
         document.getElementById('status').textContent = 'Something went wrong. Please try again.';
@@ -157,10 +157,9 @@
         starLabelEl.textContent = '\u00a0';
         document.getElementById('status').textContent = '';
         document.body.classList.remove('fade-out');
-        var c = document.querySelector('.container');
-        c.style.animation = 'none';
-        c.offsetHeight;
-        c.style.animation = '';
+        document.body.style.animation = 'none';
+        document.body.offsetHeight; // force reflow
+        document.body.style.animation = '';
       }
     });
 

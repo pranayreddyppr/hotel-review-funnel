@@ -107,7 +107,7 @@
           var redirectUrl = 'thankyou.html';
           if (hotelSlug) redirectUrl += '?hotel=' + encodeURIComponent(hotelSlug);
           document.body.classList.add('fade-out');
-          setTimeout(function() { window.location.href = redirectUrl; }, 180);
+          setTimeout(function() { window.location.href = redirectUrl; }, 230);
         } else {
           errorEl.textContent = data.error || 'Something went wrong. Please try again.';
           btn.disabled = false;
@@ -139,10 +139,9 @@
         btn.disabled = !reviewToken;
         btn.textContent = 'Submit Feedback';
         document.body.classList.remove('fade-out');
-        var c = document.querySelector('.container');
-        c.style.animation = 'none';
-        c.offsetHeight;
-        c.style.animation = '';
+        document.body.style.animation = 'none';
+        document.body.offsetHeight; // force reflow
+        document.body.style.animation = '';
       }
     });
   </script>

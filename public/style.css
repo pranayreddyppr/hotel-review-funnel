@@ -36,11 +36,22 @@ body {
   color: #fff;
   position: relative;
   overflow-x: hidden; /* keep orbs clipped; allow vertical scroll on mobile */
-  transition: opacity 0.18s ease;
+  opacity: 0;
+  animation: pageFadeIn 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 body.fade-out {
-  opacity: 0 !important;
+  animation: pageFadeOut 0.22s ease forwards !important;
+  pointer-events: none;
+}
+
+@keyframes pageFadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes pageFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* Ambient glow orbs */
